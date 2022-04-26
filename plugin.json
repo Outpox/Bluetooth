@@ -2,5 +2,13 @@
     "name": "Bluetooth",
     "author": "Outpox",
     "main_view_html": "main_view.html",
-    "flags": ["hot_reload", "debug"]
+    "flags": ["_debug"],
+    "publish": {
+        "discord_id": "116939657677111298",
+        "description": "Quickly connect to an already paired bluetooth device.",
+        "tags": [
+            "bluetooth",
+            "utility"
+        ]
+    }
 }
