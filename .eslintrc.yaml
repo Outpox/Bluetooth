@@ -1,0 +1,29 @@
+---
+env:
+  browser: true
+  es2021: true
+extends: eslint:recommended
+parserOptions:
+  ecmaVersion: latest
+globals:
+  call_plugin_method: readonly
+  fetch_nocors: readonly
+  execute_in_tab: readonly
+  inject_css_into_tab: readonly
+  remove_css_from_tab: readonly
+rules:
+  indent:
+  - error
+  - 2
+  linebreak-style:
+  - error
+  - unix
+  quotes:
+  - error
+  - single
+  semi:
+  - error
+  - always
+  no-unused-vars:
+  - warn
+  - vars: local
