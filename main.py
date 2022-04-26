@@ -22,7 +22,3 @@ class Plugin:
         else:
             stdout = subprocess.run(["bluetoothctl", "disconnect", device], text=True, capture_output=True).stdout
         return stdout
-
-    # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
-    async def _main(self):
-        pass
