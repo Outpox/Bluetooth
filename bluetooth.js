@@ -58,20 +58,20 @@ async function refreshPairedList() {
   function getDeviceRowHTML(device) {
     const div = document.createElement('div');
     div.classList.add(
-      'gamepaddialog_Field_eKmEX',
-      'gamepaddialog_WithFirstRow_2bDqk',
-      'gamepaddialog_InlineWrapShiftsChildrenBelow_3LCXh',
-      'gamepaddialog_WithBottomSeparator_3YKpU',
-      'gamepaddialog_ExtraPaddingOnChildrenBelow_3nLNL',
-      'gamepaddialog_StandardPadding_xIITX',
-      'gamepaddialog_Clickable_2Huzv',
-      'gamepaddialog_HighlightOnFocus_2HFrm',
+      'gamepaddialog_Field_S-_La',
+      'gamepaddialog_WithFirstRow_qFXi6',
+      'gamepaddialog_InlineWrapShiftsChildrenBelow_pHUb6',
+      'gamepaddialog_WithBottomSeparator_1lUZx',
+      'gamepaddialog_ExtraPaddingOnChildrenBelow_5UO-_',
+      'gamepaddialog_StandardPadding_XRBFu',
+      'gamepaddialog_Clickable_27UVY',
+      'gamepaddialog_HighlightOnFocus_wE4V6',
       'Panel',
       'Focusable'
     );
 
     if (!device.connected) {
-      div.classList.add('gamepaddialog_Disabled_aIeh3');
+      div.classList.add('gamepaddialog_Disabled_1pmyx');
     }
 
     div.onclick = () => toggleDeviceConnection(device.mac, device.connected);
@@ -90,14 +90,14 @@ async function refreshPairedList() {
     }
 
     div.innerHTML =
-      `<div class="gamepaddialog_FieldLabelRow_2VcTl">
-        <div class="gamepaddialog_FieldLabel_3jMlJ">
-            <div class="gamepaddialog_FieldLeadIcon_3CGpa">
+      `<div class="gamepaddialog_FieldLabelRow_H9WOq">
+        <div class="gamepaddialog_FieldLabel_3b0U-">
+            <div class="gamepaddialog_FieldLeadIcon_OKYIj">
                 ${deviceSVG}
             </div>
             <div>
                 <span>${device.name}</span>
-                <div class="gamepaddialog_FieldChildren_2rhav">
+                <div class="gamepaddialog_FieldChildren_14_HB">
                     ${device.connected ?
     '<div class="bluetoothsettings_NotConnectedLabel_31Z4e connected">Connected</div>' :
     '<div class="bluetoothsettings_NotConnectedLabel_31Z4e">Not Connected</div>'}
@@ -112,7 +112,7 @@ async function refreshPairedList() {
   const devices = await getPairedDevices();
   const devicesDiv = document.querySelector('#devices');
 
-  devicesDiv.querySelectorAll('.gamepaddialog_Field_eKmEX').forEach(e => e.remove());
+  devicesDiv.querySelectorAll('.gamepaddialog_Field_S-_La').forEach(e => e.remove());
 
   devices.forEach(device => {
     devicesDiv.insertAdjacentElement('beforeend', getDeviceRowHTML(device));
