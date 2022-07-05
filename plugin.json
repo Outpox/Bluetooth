@@ -1,14 +1,10 @@
 {
-    "name": "Bluetooth",
-    "author": "Outpox",
-    "main_view_html": "main_view.html",
-    "flags": ["_debug"],
-    "publish": {
-        "discord_id": "116939657677111298",
-        "description": "Quickly connect to an already paired bluetooth device.",
-        "tags": [
-            "bluetooth",
-            "utility"
-        ]
-    }
+  "name": "Bluetooth manager",
+  "author": "Outpox",
+  "flags": ["debug", "_root"],
+  "publish": {
+    "tags": ["bluetooth", "utility"],
+    "description": "Quickly connect to your already paired bluetooth devices.",
+    "image": "https://media.discordapp.net/attachments/967750435974836244/971815943841914880/unknown.png"
+  }
 }
