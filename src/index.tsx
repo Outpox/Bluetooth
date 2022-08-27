@@ -10,34 +10,43 @@ import {
   Router,
   ServerAPI,
   showContextMenu,
+  sleep,
   staticClasses,
-} from "decky-frontend-lib";
-import { VFC } from "react";
-import { BiBluetooth, ImSpinner11 } from "react-icons/all";
+} from 'decky-frontend-lib';
+import { useReducer, useState, VFC } from 'react';
+import { IconType } from 'react-icons';
+import { BiBluetooth, ImSpinner11 } from 'react-icons/all';
+import { parseBluetoothStatus, parseDevices, parseDevicesInfo } from './utils';
+import isEqual from 'lodash.isequal';
+import { sleep as rsleep, parallel } from 'radash';
+import { Device } from './components/device';
 
 // import logo from "../assets/logo.png";
 
-// interface AddMethodArgs {
-//   left: number;
-//   right: number;
-// }
+const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
+  const [status, setStatus] = useState<string>('WAITING');
+  const [devices, setDevices] = useReducer((previousValue: Device[], newValue: Device[]) => {
+    if (isEqual(newValue, previousValue)) {
+      return previousValue;
+    }
+    return newValue;
+  }, []);
 
-const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) => {
-  // const [result, setResult] = useState<number | undefined>();
+  const refreshStatus = async (serverAPI: ServerAPI) => {
+    const statusResponse = (await serverAPI.callPluginMethod('get_bluetooth_status', {})).result as string;
+    setStatus(parseBluetoothStatus(statusResponse));
 
-  // const onClick = async () => {
-  //   const result = await serverAPI.callPluginMethod<AddMethodArgs, number>(
-  //     "add",
-  //     {
-  //       left: 2,
-  //       right: 2,
-  //     }
-  //   );
-  //   if (result.success) {
-  //     setResult(result.result);
-  //   }
-  // };
-  const status = 'WAITING'
+    const pairedDevicesResponse = (await serverAPI.callPluginMethod('get_paired_devices', {})).result as string;
+    const pairedDevices = parseDevices(pairedDevicesResponse);
+
+    const pairedDevicesWithInfoReponse = await parallel(6, pairedDevices,
+      async pairedDevice => (await serverAPI.callPluginMethod('get_device_info', { device: pairedDevice.mac })).result as string);
+    const pairedDevicesWithInfo = parseDevicesInfo(pairedDevicesWithInfoReponse);
+    console.log('pairedDevicesWithInfo: ', pairedDevicesWithInfo);
+    setDevices(pairedDevicesWithInfo);
+  };
+
+  void refreshStatus(serverAPI);
 
   return (
     <div>
@@ -71,9 +80,13 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) => {
           <Field
             className="devicesTitle"
             label="Paired devices">
-            <ImSpinner11/>
+            <ImSpinner11 onClick={() => refreshStatus(serverAPI)}/>
           </Field>
         </PanelSectionRow>
+
+        {devices.map(device => (
+          <Device device={device} />
+        ))}
 
         {/* <PanelSectionRow>
         <ButtonItem
@@ -115,28 +128,26 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) => {
   );
 };
 
-const DeckyPluginRouterTest: VFC = () => {
-  return (
-    <div style={{ marginTop: "50px", color: "white" }}>
-      Hello World!
-      <DialogButton onClick={() => Router.NavigateToStore()}>
-        Go to Store
-      </DialogButton>
-    </div>
-  );
-};
+// const DeckyPluginRouterTest: VFC = () => (
+//   <div style={{ marginTop: '50px', color: 'white' }}>
+//       Hello World!
+//     <DialogButton onClick={() => Router.NavigateToStore()}>
+//         Go to Store
+//     </DialogButton>
+//   </div>
+// );
 
-export default definePlugin((serverApi: ServerAPI) => {
-  serverApi.routerHook.addRoute("/decky-plugin-test", DeckyPluginRouterTest, {
-    exact: true,
-  });
+export default definePlugin((serverApi: ServerAPI) =>
+// serverApi.routerHook.addRoute('/decky-plugin-test', DeckyPluginRouterTest, {
+//   exact: true,
+// });
 
-  return {
-    title: <div className={staticClasses.Title}>Example Plugin</div>,
+  ({
+    title: <div className={staticClasses.Title}>SDH-Bluetooth</div>,
     content: <Content serverAPI={serverApi} />,
     icon: <BiBluetooth />,
-    onDismount() {
-      serverApi.routerHook.removeRoute("/decky-plugin-test");
-    },
-  };
-});
+    // onDismount() {
+    // serverApi.routerHook.removeRoute('/decky-plugin-test');
+    // },
+  })
+);
