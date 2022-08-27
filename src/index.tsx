@@ -59,18 +59,30 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
         /* Force plugin title to be on a single line */
         flex-grow: 1 !important;
       }
-      .status, .devicesTitle {
+
+      .status, .devicesTitle, .connected {
         color: #dcdedf;
       }
-      .devicesTitle {
 
+      .disconnected {
+        color: #67707b;
+      }
+
+      /* Force Fields content to be left aligned */
+      .no-flex-grow > div[class^="gamepaddialog_FieldLabelRow_"] > div[class^="gamepaddialog_FieldLabel_"] {
+        flex-grow: 0;
+      }
+
+      .closer-description > div[class=^="gamepaddialog_FieldDescription_"] {
+        margin-top: 0;
+        margin-left: calc(32px + var(--field-row-children-spacing));
       }
     ` }} />
       <PanelSection>
         <PanelSectionRow>
           <Field
             icon={<BiBluetooth />}
-            className="status"
+            className="status no-flex-grow"
           >
             <span>Bluetooth status: {status}</span>
           </Field>
@@ -83,10 +95,11 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
             <ImSpinner11 onClick={() => refreshStatus(serverAPI)}/>
           </Field>
         </PanelSectionRow>
-
-        {devices.map(device => (
-          <Device device={device} />
-        ))}
+        <PanelSectionRow>
+          {devices.map(device => (
+            <Device device={device} key={device.mac} />
+          ))}
+        </PanelSectionRow>
 
         {/* <PanelSectionRow>
         <ButtonItem
