@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { VFC } from 'react';
 import { Spinner as SDSpinner } from 'decky-frontend-lib';
 import { ImSpinner11 } from 'react-icons/all';

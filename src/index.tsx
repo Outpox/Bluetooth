@@ -1,15 +1,9 @@
 import {
-  ButtonItem,
   definePlugin,
-  DialogButton,
   Field,
-  Menu,
-  MenuItem,
   PanelSection,
   PanelSectionRow,
-  Router,
   ServerAPI,
-  showContextMenu,
   sleep,
   staticClasses,
 } from 'decky-frontend-lib';
@@ -19,8 +13,6 @@ import { parseBluetoothStatus, parseDevices, parseDevicesInfo } from './utils';
 import isEqual from 'lodash.isequal';
 import { Device } from './components/device';
 import { Spinner } from './components/spinner';
-
-// import logo from "../assets/logo.png";
 
 const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   const [status, setStatus] = useState<string>('LOADING');
@@ -32,9 +24,8 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     return newValue;
   }, []);
 
-  const refreshStatus = async (serverAPI: ServerAPI) => {
+  const refreshStatus = async (serverAPI: ServerAPI, delay = 0) => {
     setLoading(true);
-    setStatus('LOADING');
     const statusResponse = (await serverAPI.callPluginMethod('get_bluetooth_status', {})).result as string;
 
     const pairedDevicesResponse = (await serverAPI.callPluginMethod('get_paired_devices', {})).result as string;
@@ -46,14 +37,14 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     const pairedDevicesWithInfo = parseDevicesInfo(pairedDevicesWithInfoReponse);
     console.log('pairedDevicesWithInfo: ', pairedDevicesWithInfo);
 
-    await sleep(300);
+    await sleep(delay);
     setStatus(parseBluetoothStatus(statusResponse));
     setDevices(pairedDevicesWithInfo);
     setLoading(false);
   };
 
   useEffect(() => {
-    void refreshStatus(serverAPI);
+    void refreshStatus(serverAPI, 0);
   }, []);
 
   return (
@@ -87,6 +78,9 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       .no-flex-grow > div[class^="gamepaddialog_FieldLabelRow_"] > div[class^="gamepaddialog_FieldLabel_"] {
         flex-grow: 0;
       }
+      .no-flex-grow > div[class^="gamepaddialog_FieldLabelRow_"] > div[class^="gamepaddialog_FieldChildren_"] {
+        max-width: calc(100% - calc(32px + var(--field-row-children-spacing)))
+      }
 
       .closer-description > div[class^="gamepaddialog_FieldDescription_"] {
         margin-top: 0;
@@ -107,77 +101,30 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           <Field
             className="devicesTitle"
             label="Paired devices">
-            <Spinner loading={loading} refresh={() => refreshStatus(serverAPI)}/>
+            <Spinner loading={loading} refresh={() => refreshStatus(serverAPI, 300)}/>
           </Field>
         </PanelSectionRow>
       </PanelSection>
       <PanelSection>
         {devices.map(device => (
           <PanelSectionRow>
-            <Device device={device} key={device.mac} />
+            <Device key={device.mac}
+              device={device}
+              serverAPI={serverAPI}
+              refresh={() => refreshStatus(serverAPI, 0)}
+              setLoading={(state: boolean) => setLoading(state)}
+            />
           </PanelSectionRow>
         ))}
-
-        {/* <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={(e) =>
-            showContextMenu(
-              <Menu label="Menu" cancelText="CAAAANCEL" onCancel={() => {}}>
-                <MenuItem onSelected={() => {}}>Item #1</MenuItem>
-                <MenuItem onSelected={() => {}}>Item #2</MenuItem>
-                <MenuItem onSelected={() => {}}>Item #3</MenuItem>
-              </Menu>,
-              e.currentTarget ?? window
-            )
-          }
-        >
-          Server says yolo
-        </ButtonItem>
-      </PanelSectionRow>
-
-      <PanelSectionRow>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src={logo} />
-        </div>
-      </PanelSectionRow>
-
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={() => {
-            Router.CloseSideMenus();
-            Router.Navigate("/decky-plugin-test");
-          }}
-        >
-          Router
-        </ButtonItem>
-      </PanelSectionRow> */}
       </PanelSection>
     </div>
   );
 };
 
-// const DeckyPluginRouterTest: VFC = () => (
-//   <div style={{ marginTop: '50px', color: 'white' }}>
-//       Hello World!
-//     <DialogButton onClick={() => Router.NavigateToStore()}>
-//         Go to Store
-//     </DialogButton>
-//   </div>
-// );
-
 export default definePlugin((serverApi: ServerAPI) =>
-// serverApi.routerHook.addRoute('/decky-plugin-test', DeckyPluginRouterTest, {
-//   exact: true,
-// });
-
   ({
     title: <div className={staticClasses.Title}>SDH-Bluetooth</div>,
     content: <Content serverAPI={serverApi} />,
     icon: <BiBluetooth />,
-    // onDismount() {
-    // serverApi.routerHook.removeRoute('/decky-plugin-test');
-    // },
   })
 );

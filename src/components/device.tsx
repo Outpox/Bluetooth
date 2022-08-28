@@ -1,4 +1,4 @@
-import { Field } from 'decky-frontend-lib';
+import { Button, Field, ServerAPI } from 'decky-frontend-lib';
 import { ReactElement, VFC } from 'react';
 import { BiBluetooth } from 'react-icons/bi';
 import { BsHeadphones, BsHeadset, BsController } from 'react-icons/bs';
@@ -10,26 +10,48 @@ export interface Device {
   icon: string;
 }
 
-const getIcon = (icon: string): ReactElement => {
-  switch (icon) {
-    case 'input-gaming':
-      return <BsController/>;
-    case 'audio-headset':
-      return <BsHeadset/>;
-    case 'audio-headphones':
-      return <BsHeadphones/>;
-    default:
-      return <BiBluetooth/>;
-  }
-};
+export const Device: VFC<{
+  device: Device;
+  serverAPI: ServerAPI;
+  refresh: () => void;
+  setLoading: (state: boolean) => void;
+}> = ({
+  device,
+  serverAPI,
+  refresh,
+  setLoading,
+}) => {
+  const getIcon = (): ReactElement => {
+    switch (device.icon) {
+      case 'input-gaming':
+        return <BsController/>;
+      case 'audio-headset':
+        return <BsHeadset/>;
+      case 'audio-headphones':
+        return <BsHeadphones/>;
+      default:
+        return <BiBluetooth/>;
+    }
+  };
 
-export const Device: VFC<{device: Device}> = ({ device }) => (
-  <Field
-    description={device.connected
-      ? <span className='connected'>CONNECTED</span>
-      : <span className='disconnected'>NOT CONNECTED</span>}
-    className={`no-flex-grow closer-description ${device.connected ? 'connected' : 'disconnected'}`}
-    icon={getIcon(device.icon)}>
-    <span>{device.name}</span>
-  </Field>
-);
+  const toggleDeviceConnection = () => {
+    setLoading(true);
+    void serverAPI.callPluginMethod('toggle_device_connection', { device: device.mac, connected: device.connected }).then(value => {
+      console.log(value);
+      refresh();
+    });
+  };
+
+  return (
+    <Field
+      description={device.connected
+        ? <span className='connected'>CONNECTED</span>
+        : <span className='disconnected'>NOT CONNECTED</span>}
+      className={`no-flex-grow closer-description ${device.connected ? 'connected' : 'disconnected'}`}
+      icon={getIcon()}
+      onClick={toggleDeviceConnection}
+    >
+      <span>{device.name}</span>
+    </Field>
+  );
+};
