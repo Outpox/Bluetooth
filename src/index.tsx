@@ -123,7 +123,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
 
 export default definePlugin((serverApi: ServerAPI) =>
   ({
-    title: <div className={staticClasses.Title}>SDH-Bluetooth</div>,
+    title: <div className={staticClasses.Title}>Bluetooth</div>,
     content: <Content serverAPI={serverApi} />,
     icon: <BiBluetooth />,
   })
