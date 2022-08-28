@@ -23,17 +23,11 @@ const getIcon = (icon: string): ReactElement => {
   }
 };
 
-// const style: Record<string, React.CSSProperties> = {
-//   connected: {
-//     color: '#dcdedf',
-//   },
-// };
-
 export const Device: VFC<{device: Device}> = ({ device }) => (
   <Field
     description={device.connected
-      ? <span>CONNECTED</span>
-      : <span>NOT CONNECTED</span>}
+      ? <span className='connected'>CONNECTED</span>
+      : <span className='disconnected'>NOT CONNECTED</span>}
     className={`no-flex-grow closer-description ${device.connected ? 'connected' : 'disconnected'}`}
     icon={getIcon(device.icon)}>
     <span>{device.name}</span>
