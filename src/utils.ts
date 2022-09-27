@@ -7,7 +7,7 @@ export function parseBluetoothStatus(output: string) {
     : 'OFF';
 }
 
-export function parseDevices(output: string) {
+export function parseDevices(output: string): PairedDevices[] {
   return [...output.matchAll(/Device (([0-9A-F]{2}[:-]){5}([0-9A-F]{2})) (.*)$/gmi)]
     .map(captureGroups => ({
       mac: captureGroups[1],
@@ -22,4 +22,9 @@ export function parseDevicesInfo(output: string[]): Device[] {
     connected: /Connected: yes/.test(device),
     icon: /Icon: (.*)/.exec(device)![1],
   }));
+}
+
+export interface PairedDevices {
+  mac: string;
+  name: string;
 }

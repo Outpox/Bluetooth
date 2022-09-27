@@ -70,7 +70,7 @@ module.exports = {
       'error',
       {
         hoist: 'all',
-        allow: ['serverAPI']
+        allow: ['serverAPI', 'backend']
       },
     ],
     'arrow-body-style': ['error'],
