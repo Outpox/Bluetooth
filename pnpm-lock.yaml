@@ -11,7 +11,7 @@ specifiers:
   '@types/webpack': ^5.28.0
   '@typescript-eslint/eslint-plugin': ^5.35.1
   '@typescript-eslint/parser': ^5.35.1
-  decky-frontend-lib: ^1.8.0
+  decky-frontend-lib: ^3.2.1
   eslint: ^8.22.0
   lodash.isequal: ^4.5.0
   radash: ^7.0.0
@@ -23,7 +23,7 @@ specifiers:
   typescript: ^4.6.4
 
 dependencies:
-  decky-frontend-lib: 1.8.0
+  decky-frontend-lib: 3.2.1
   lodash.isequal: 4.5.0
   radash: 7.0.0
   react-icons: 4.4.0
@@ -707,8 +707,8 @@ packages:
       ms: 2.1.2
     dev: true
 
-  /decky-frontend-lib/1.8.0:
-    resolution: {integrity: sha512-ZPJdbkNI5d/d/19Hv97FVgFyMerYUzwXavYGv8euLMrbH9XuVM4KAx0mbKkO0SQUl75HKQ3LxsaCpA6QLDr9EA==}
+  /decky-frontend-lib/3.2.1:
+    resolution: {integrity: sha512-SfQM73LOm5X0vmprIptNzD5PMogV3okZPn+773D+6PZe2RW2DFIjjiSETyKJzTUvyAZqX0joBPQQ6ZmX6fdO1w==}
     dependencies:
       minimist: 1.2.6
     dev: false
