@@ -5,6 +5,6 @@
   "publish": {
     "tags": ["bluetooth", "utility"],
     "description": "Quickly connect to your already paired bluetooth devices.",
-    "image": "https://media.discordapp.net/attachments/967750435974836244/971815943841914880/unknown.png"
+    "image": "https://raw.githubusercontent.com/Outpox/Bluetooth/main/assets/preview.jpg"
   }
 }
