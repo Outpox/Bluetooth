@@ -1,4 +1,4 @@
-import { Field, ServerAPI } from 'decky-frontend-lib';
+import { Field } from 'decky-frontend-lib';
 import { ReactElement, VFC } from 'react';
 import { BiBluetooth } from 'react-icons/bi';
 import { BsHeadphones, BsHeadset, BsController } from 'react-icons/bs';
@@ -37,10 +37,7 @@ export const Device: VFC<{
 
   const toggleDeviceConnection = () => {
     setLoading(true);
-    void backend.toggleDeviceConnection(device).then(value => {
-      console.log(value);
-      refresh();
-    });
+    void backend.toggleDeviceConnection(device).then(refresh);
   };
 
   return (
