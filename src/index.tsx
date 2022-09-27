@@ -9,12 +9,12 @@ import {
 } from 'decky-frontend-lib';
 import { useEffect, useReducer, useState, VFC } from 'react';
 import { BiBluetooth } from 'react-icons/all';
-import { parseBluetoothStatus, parseDevices, parseDevicesInfo } from './utils';
 import isEqual from 'lodash.isequal';
 import { Device } from './components/device';
 import { Spinner } from './components/spinner';
+import { Backend } from './server';
 
-const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
+const Content: VFC<{ backend: Backend }> = ({ backend }) => {
   const [status, setStatus] = useState<string>('LOADING');
   const [loading, setLoading] = useState<boolean>(false);
   const [devices, setDevices] = useReducer((previousValue: Device[], newValue: Device[]) => {
@@ -24,27 +24,18 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     return newValue;
   }, []);
 
-  const refreshStatus = async (serverAPI: ServerAPI, delay = 0) => {
+  const refreshStatus = async (backend: Backend, delay = 0) => {
     setLoading(true);
-    const statusResponse = (await serverAPI.callPluginMethod('get_bluetooth_status', {})).result as string;
-
-    const pairedDevicesResponse = (await serverAPI.callPluginMethod('get_paired_devices', {})).result as string;
-    const pairedDevices = parseDevices(pairedDevicesResponse);
-
-    const pairedDevicesWithInfoReponse = await Promise.all(pairedDevices.map(
-      async pairedDevice => (await serverAPI.callPluginMethod('get_device_info', { device: pairedDevice.mac })).result as string)
-    );
-    const pairedDevicesWithInfo = parseDevicesInfo(pairedDevicesWithInfoReponse);
-    console.log('pairedDevicesWithInfo: ', pairedDevicesWithInfo);
 
     await sleep(delay);
-    setStatus(parseBluetoothStatus(statusResponse));
-    setDevices(pairedDevicesWithInfo);
+    setStatus(await backend.getBluetoothStatus());
+    setDevices(await backend.getPairedDevicesWithInfo());
+
     setLoading(false);
   };
 
   useEffect(() => {
-    void refreshStatus(serverAPI, 0);
+    void refreshStatus(backend, 0);
   }, []);
 
   return (
@@ -101,7 +92,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           <Field
             className="devicesTitle"
             label="Paired devices">
-            <Spinner loading={loading} refresh={() => refreshStatus(serverAPI, 300)}/>
+            <Spinner loading={loading} refresh={() => refreshStatus(backend, 300)}/>
           </Field>
         </PanelSectionRow>
       </PanelSection>
@@ -110,8 +101,8 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           <PanelSectionRow>
             <Device key={device.mac}
               device={device}
-              serverAPI={serverAPI}
-              refresh={() => refreshStatus(serverAPI, 0)}
+              backend={backend}
+              refresh={() => refreshStatus(backend, 0)}
               setLoading={(state: boolean) => setLoading(state)}
             />
           </PanelSectionRow>
@@ -121,10 +112,12 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   );
 };
 
-export default definePlugin((serverApi: ServerAPI) =>
-  ({
+export default definePlugin((serverApi: ServerAPI) => {
+  const backend = Backend.initialize(serverApi);
+
+  return ({
     title: <div className={staticClasses.Title}>Bluetooth</div>,
-    content: <Content serverAPI={serverApi} />,
+    content: <Content backend={backend} />,
     icon: <BiBluetooth />,
-  })
-);
+  });
+});
