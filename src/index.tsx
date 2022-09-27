@@ -1,8 +1,10 @@
 import {
   definePlugin,
+  ButtonItem,
   Field,
   PanelSection,
   PanelSectionRow,
+  Router,
   ServerAPI,
   sleep,
   staticClasses,
@@ -12,7 +14,10 @@ import { BiBluetooth } from 'react-icons/all';
 import isEqual from 'lodash.isequal';
 import { Device } from './components/device';
 import { Spinner } from './components/spinner';
+import { AdvancedSettings } from './pages/advanced-settings';
 import { Backend } from './server';
+
+const advancedSettingsRoute = '/bluetooth-advanced-settings';
 
 const Content: VFC<{ backend: Backend }> = ({ backend }) => {
   const [status, setStatus] = useState<string>('LOADING');
@@ -108,6 +113,19 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
           </PanelSectionRow>
         ))}
       </PanelSection>
+      <PanelSection>
+        <PanelSectionRow>
+          <ButtonItem
+            layout="below"
+            onClick={() => {
+              Router.CloseSideMenus();
+              Router.Navigate(advancedSettingsRoute);
+            }}
+          >
+          Router
+          </ButtonItem>
+        </PanelSectionRow>
+      </PanelSection>
     </div>
   );
 };
@@ -115,9 +133,14 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
 export default definePlugin((serverApi: ServerAPI) => {
   const backend = Backend.initialize(serverApi);
 
+  serverApi.routerHook.addRoute(advancedSettingsRoute, AdvancedSettings);
+
   return ({
     title: <div className={staticClasses.Title}>Bluetooth</div>,
     content: <Content backend={backend} />,
     icon: <BiBluetooth />,
-  })
-);
+    onDismount() {
+      serverApi.routerHook.removeRoute(advancedSettingsRoute);
+    },
+  });
+});
