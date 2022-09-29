@@ -6,6 +6,7 @@ import {
   ServerAPI,
   sleep,
   staticClasses,
+  ToggleField,
 } from 'decky-frontend-lib';
 import { useEffect, useReducer, useState, VFC } from 'react';
 import { BiBluetooth } from 'react-icons/all';
@@ -13,9 +14,10 @@ import isEqual from 'lodash.isequal';
 import { Device } from './components/device';
 import { Spinner } from './components/spinner';
 import { Backend } from './server';
+import { i18n } from './utils';
 
 const Content: VFC<{ backend: Backend }> = ({ backend }) => {
-  const [status, setStatus] = useState<string>('LOADING');
+  const [status, setStatus] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [devices, setDevices] = useReducer((previousValue: Device[], newValue: Device[]) => {
     if (isEqual(newValue, previousValue)) {
@@ -23,6 +25,14 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
     }
     return newValue;
   }, []);
+
+  SteamClient.System.Bluetooth.RegisterForStateChanges(change => {
+    setStatus(change.bEnabled);
+  });
+
+  const toggleBluetooth = () => {
+    void SteamClient.System.Bluetooth.SetEnabled(!status);
+  };
 
   const refreshStatus = async (backend: Backend, delay = 0) => {
     setLoading(true);
@@ -54,6 +64,10 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
         margin-bottom: 0;
       }
 
+      .uppercase {
+        text-transform: uppercase;
+      }
+      
       .status, .devicesTitle, .connected {
         color: #dcdedf;
       }
@@ -80,18 +94,17 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
     ` }} />
       <PanelSection>
         <PanelSectionRow>
-          <Field
-            icon={<BiBluetooth />}
-            className="status no-flex-grow"
-          >
-            <span>Bluetooth status: {status}</span>
-          </Field>
+          <ToggleField
+            label='Bluetooth'
+            checked={status}
+            onChange={toggleBluetooth}
+          />
         </PanelSectionRow>
 
         <PanelSectionRow>
           <Field
             className="devicesTitle"
-            label="Paired devices">
+            label={i18n('Settings_Bluetooth_Devices')}>
             <Spinner loading={loading} refresh={() => refreshStatus(backend, 300)}/>
           </Field>
         </PanelSectionRow>

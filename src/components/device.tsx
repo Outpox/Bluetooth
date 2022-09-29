@@ -3,6 +3,7 @@ import { ReactElement, VFC } from 'react';
 import { BiBluetooth } from 'react-icons/bi';
 import { BsHeadphones, BsHeadset, BsController } from 'react-icons/bs';
 import { Backend } from '../server';
+import { i18n } from '../utils';
 
 export interface Device {
   mac: string;
@@ -43,8 +44,8 @@ export const Device: VFC<{
   return (
     <Field
       description={device.connected
-        ? <span className='connected'>CONNECTED</span>
-        : <span className='disconnected'>NOT CONNECTED</span>}
+        ? <span className='connected uppercase'>{i18n('Settings_Bluetooth_Connected')}</span>
+        : <span className='disconnected uppercase'>{i18n('Settings_Bluetooth_NotConnected')}</span>}
       className={`no-flex-grow closer-description ${device.connected ? 'connected' : 'disconnected'}`}
       icon={getIcon()}
       onClick={toggleDeviceConnection}

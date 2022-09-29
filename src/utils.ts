@@ -1,10 +1,7 @@
 import { Device } from './components/device';
 
 export function parseBluetoothStatus(output: string) {
-  const powered = (/Powered: (.*)/.exec(output) ?? [])[1] === 'yes' || false;
-  return powered
-    ? 'ON'
-    : 'OFF';
+  return (/Powered: (.*)/.exec(output) ?? [])[1] === 'yes';
 }
 
 export function parseDevices(output: string): PairedDevices[] {
@@ -23,6 +20,13 @@ export function parseDevicesInfo(output: string[]): Device[] {
     connected: /Connected: yes/.test(device),
     icon: (/Icon: (.*)/.exec(device) ?? [])[1] || '',
   }));
+}
+
+export function i18n(key: string) {
+  const val = LocalizationManager.m_mapTokens.get(key);
+  return val
+    ? val
+    : LocalizationManager.m_mapFallbackTokens.get(key)!;
 }
 
 export interface PairedDevices {

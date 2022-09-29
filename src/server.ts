@@ -20,7 +20,7 @@ export class Backend {
     this.serverAPI = server;
   }
 
-  async getBluetoothStatus(): Promise<'ON' | 'OFF'> {
+  async getBluetoothStatus(): Promise<boolean> {
     const status = (await this.serverAPI.callPluginMethod('get_bluetooth_status', {})).result as string;
     return parseBluetoothStatus(status);
   }
