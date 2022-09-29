@@ -9,12 +9,12 @@ import {
   ToggleField,
 } from 'decky-frontend-lib';
 import { useEffect, useReducer, useState, VFC } from 'react';
-import { BiBluetooth } from 'react-icons/all';
 import isEqual from 'lodash.isequal';
 import { Device } from './components/device';
 import { Spinner } from './components/spinner';
 import { Backend } from './server';
 import { i18n } from './utils';
+import { BluetoothIcon } from './components/icons';
 
 const Content: VFC<{ backend: Backend }> = ({ backend }) => {
   const [status, setStatus] = useState<boolean>(false);
@@ -89,7 +89,7 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
 
       .closer-description > div[class^="gamepaddialog_FieldDescription_"] {
         margin-top: 0;
-        margin-left: calc(32px + var(--field-row-children-spacing));
+        margin-left: calc(36px + var(--field-row-children-spacing));
       }
     ` }} />
       <PanelSection>
@@ -131,6 +131,6 @@ export default definePlugin((serverApi: ServerAPI) => {
   return ({
     title: <div className={staticClasses.Title}>Bluetooth</div>,
     content: <Content backend={backend} />,
-    icon: <BiBluetooth />,
+    icon: <BluetoothIcon style={{ width: '1em' }}/>,
   });
 });
