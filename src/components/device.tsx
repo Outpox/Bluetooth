@@ -1,8 +1,8 @@
-import { Field, ServerAPI } from 'decky-frontend-lib';
+import { Field } from 'decky-frontend-lib';
 import { ReactElement, VFC } from 'react';
-import { BiBluetooth } from 'react-icons/bi';
-import { BsHeadphones, BsHeadset, BsController } from 'react-icons/bs';
 import { Backend } from '../server';
+import { i18n } from '../utils';
+import { BluetoothIcon, GamepadIcon, HeadsetIcon } from './icons';
 
 export interface Device {
   mac: string;
@@ -25,29 +25,26 @@ export const Device: VFC<{
   const getIcon = (): ReactElement => {
     switch (device.icon) {
       case 'input-gaming':
-        return <BsController/>;
+        return <GamepadIcon/>;
       case 'audio-headset':
-        return <BsHeadset/>;
+        return <HeadsetIcon/>;
       case 'audio-headphones':
-        return <BsHeadphones/>;
+        return <HeadsetIcon/>;
       default:
-        return <BiBluetooth/>;
+        return <BluetoothIcon/>;
     }
   };
 
   const toggleDeviceConnection = () => {
     setLoading(true);
-    void backend.toggleDeviceConnection(device).then(value => {
-      console.log(value);
-      refresh();
-    });
+    void backend.toggleDeviceConnection(device).then(refresh);
   };
 
   return (
     <Field
       description={device.connected
-        ? <span className='connected'>CONNECTED</span>
-        : <span className='disconnected'>NOT CONNECTED</span>}
+        ? <span className='connected uppercase'>{i18n('Settings_Bluetooth_Connected')}</span>
+        : <span className='disconnected uppercase'>{i18n('Settings_Bluetooth_NotConnected')}</span>}
       className={`no-flex-grow closer-description ${device.connected ? 'connected' : 'disconnected'}`}
       icon={getIcon()}
       onClick={toggleDeviceConnection}
