@@ -1,4 +1,4 @@
-import { Field } from 'decky-frontend-lib';
+import { Field, Router } from 'decky-frontend-lib';
 import { MouseEventHandler, MutableRefObject, ReactElement, useEffect, useRef, VFC } from 'react';
 import { Backend } from '../server';
 import { i18n } from '../utils';
@@ -63,9 +63,7 @@ export const Device: VFC<{
   };
 
   const handleLongPress = () => {
-    // setLoading(true);
-    // void backend.toggleDeviceConnection(device).then(refresh);
-    console.log('longpress!');
+    Router.Navigate('/device-settings/' + device.mac);
   };
 
   type vgp_event = Event & {

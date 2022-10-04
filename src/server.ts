@@ -30,6 +30,11 @@ export class Backend {
     return parseDevices(pairedDevicesResponse);
   }
 
+  async getPairedDeviceWithInfo(mac: string): Promise<Device> {
+    const device = (await this.serverAPI.callPluginMethod('get_device_info', { device: mac })).result as string;
+    return parseDevicesInfo([device])[0];
+  }
+
   async getPairedDevicesWithInfo(): Promise<Device[]> {
     const pairedDevices = await this.getPairedDevices();
     const pairedDevicesWithInfo = await Promise.all(

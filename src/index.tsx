@@ -17,9 +17,7 @@ import { Spinner } from './components/spinner';
 import { Backend } from './server';
 import { i18n } from './utils';
 import { BluetoothIcon } from './components/icons';
-import { AdvancedSettings } from './pages/advanced-settings';
-
-const advancedSettingsRoute = '/bluetooth-advanced-settings';
+import { DevicePage } from './pages/device';
 
 const Content: VFC<{ backend: Backend }> = ({ backend }) => {
   const [status, setStatus] = useState<boolean>(false);
@@ -126,34 +124,22 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
           </PanelSectionRow>
         ))}
       </PanelSection>
-      <PanelSection>
-        <PanelSectionRow>
-          <ButtonItem
-            layout="below"
-            onClick={() => {
-              Router.CloseSideMenus();
-              Router.Navigate(advancedSettingsRoute);
-            }}
-          >
-          Router
-          </ButtonItem>
-        </PanelSectionRow>
-      </PanelSection>
     </div>
   );
 };
 
 export default definePlugin((serverApi: ServerAPI) => {
   const backend = Backend.initialize(serverApi);
+  const DeviceSettingsRoute = '/device-settings/:deviceMac';
 
-  serverApi.routerHook.addRoute(advancedSettingsRoute, AdvancedSettings);
+  serverApi.routerHook.addRoute(DeviceSettingsRoute, DevicePage);
 
   return ({
     title: <div className={staticClasses.Title}>Bluetooth</div>,
     content: <Content backend={backend} />,
     icon: <BluetoothIcon style={{ width: '1em' }}/>,
     onDismount() {
-      serverApi.routerHook.removeRoute(advancedSettingsRoute);
+      serverApi.routerHook.removeRoute(DeviceSettingsRoute);
     },
   });
 });
