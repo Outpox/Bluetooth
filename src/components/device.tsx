@@ -1,5 +1,5 @@
 import { Field } from 'decky-frontend-lib';
-import { ReactElement, VFC } from 'react';
+import { MouseEventHandler, MutableRefObject, ReactElement, useEffect, useRef, VFC } from 'react';
 import { Backend } from '../server';
 import { i18n } from '../utils';
 import { BluetoothIcon, GamepadIcon, HeadsetIcon } from './icons';
@@ -22,32 +22,92 @@ export const Device: VFC<{
   refresh,
   setLoading,
 }) => {
+  const iconStyle: React.CSSProperties = {
+    transform: 'translateY(10px)',
+  };
   const getIcon = (): ReactElement => {
     switch (device.icon) {
       case 'input-gaming':
-        return <GamepadIcon/>;
+        return <GamepadIcon style={iconStyle}/>;
       case 'audio-headset':
-        return <HeadsetIcon/>;
+        return <HeadsetIcon style={iconStyle}/>;
       case 'audio-headphones':
-        return <HeadsetIcon/>;
+        return <HeadsetIcon style={iconStyle}/>;
       default:
-        return <BluetoothIcon/>;
+        return <BluetoothIcon style={iconStyle}/>;
     }
   };
 
-  const toggleDeviceConnection = () => {
+  const longPress = useRef(false);
+  const timer: MutableRefObject<NodeJS.Timeout|undefined> = useRef();
+
+  const startTimer = () => {
+    longPress.current = false;
+    timer.current = setTimeout(() => {
+      longPress.current = true;
+      handleLongPress();
+    }, 500);
+  };
+
+  const stopTimer = () => {
+    clearTimeout(timer.current);
+  };
+
+  const handleClick: MouseEventHandler = e => {
+    if (e.type === 'vgp_onok') {
+      e.preventDefault();
+      return;
+    }
     setLoading(true);
     void backend.toggleDeviceConnection(device).then(refresh);
   };
 
+  const handleLongPress = () => {
+    // setLoading(true);
+    // void backend.toggleDeviceConnection(device).then(refresh);
+    console.log('longpress!');
+  };
+
+  type vgp_event = Event & {
+    detail: {
+      button: number;
+      source: number;
+      is_repeat: boolean|undefined;
+    };
+  }
+
+  const elementRef: MutableRefObject<HTMLDivElement|null> = useRef(null);
+  useEffect(() => {
+    elementRef.current?.addEventListener('vgp_onbuttondown', e => {
+      const se = e as vgp_event;
+      if (se.detail.button === 1) {
+        startTimer();
+      }
+    });
+    elementRef.current?.addEventListener('vgp_onbuttonup', e => {
+      const se = e as vgp_event;
+      if (se.detail.button === 1) {
+        stopTimer();
+        if (!longPress.current) {
+          handleClick(e as any);
+        }
+      }
+    });
+  }, []);
+
   return (
     <Field
+      ref={elementRef}
       description={device.connected
         ? <span className='connected uppercase'>{i18n('Settings_Bluetooth_Connected')}</span>
         : <span className='disconnected uppercase'>{i18n('Settings_Bluetooth_NotConnected')}</span>}
       className={`no-flex-grow closer-description ${device.connected ? 'connected' : 'disconnected'}`}
       icon={getIcon()}
-      onClick={toggleDeviceConnection}
+      onClick={handleClick}
+      onTouchStart={startTimer}
+      onTouchEnd={stopTimer}
+      onMouseDown={startTimer}
+      onMouseUp={stopTimer}
     >
       <span>{device.name}</span>
     </Field>
