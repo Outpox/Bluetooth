@@ -13,7 +13,7 @@ specifiers:
   '@types/webpack': ^5.28.0
   '@typescript-eslint/eslint-plugin': ^5.35.1
   '@typescript-eslint/parser': ^5.35.1
-  decky-frontend-lib: ^3.2.1
+  decky-frontend-lib: ^3.19.2
   eslint: ^8.22.0
   jest: ^29.0.3
   lodash.isequal: ^4.5.0
@@ -27,7 +27,7 @@ specifiers:
   typescript: ^4.8.3
 
 dependencies:
-  decky-frontend-lib: 3.2.1
+  decky-frontend-lib: 3.19.2
   lodash.isequal: 4.5.0
   radash: 7.0.0
   react-icons: 4.4.0
@@ -1598,10 +1598,8 @@ packages:
       ms: 2.1.2
     dev: true
 
-  /decky-frontend-lib/3.2.1:
-    resolution: {integrity: sha512-SfQM73LOm5X0vmprIptNzD5PMogV3okZPn+773D+6PZe2RW2DFIjjiSETyKJzTUvyAZqX0joBPQQ6ZmX6fdO1w==}
-    dependencies:
-      minimist: 1.2.6
+  /decky-frontend-lib/3.19.2:
+    resolution: {integrity: sha512-J8QYlzi+FEwwoDxoUOhq+BvRO1bdg8O60oxyfcRF7nLalGPrRyaXx4MNNP117X/RY7smPF1xigjglNthdv9Yzw==}
     dev: false
 
   /dedent/0.7.0:
@@ -2812,6 +2810,7 @@ packages:
 
   /minimist/1.2.6:
     resolution: {integrity: sha512-Jsjnk4bw3YJqYzbdyBiNsPWHPfO++UGG749Cxs6peCu5Xg4nrena6OVxOYxrQTqww0Jmwt+Ref8rggumkTLz9Q==}
+    dev: true
 
   /ms/2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
