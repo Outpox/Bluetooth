@@ -1,4 +1,4 @@
-![](./assets/preview.jpg)
+![](./assets/preview.png)
 
 # Bluetooth plugin  
 Formerly known as `SDH-Bluetooth`, this plugin allows you to quickly connect to already paired bluetooth devices.  
