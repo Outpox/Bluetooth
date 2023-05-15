@@ -2,8 +2,8 @@ lockfileVersion: '6.0'
 
 dependencies:
   decky-frontend-lib:
-    specifier: ^3.20.4
-    version: 3.20.4
+    specifier: ^3.20.7
+    version: 3.20.7
   lodash.isequal:
     specifier: ^4.5.0
     version: 4.5.0
@@ -1620,8 +1620,8 @@ packages:
       ms: 2.1.2
     dev: true
 
-  /decky-frontend-lib@3.20.4:
-    resolution: {integrity: sha512-DJgVonmk3lmRc/9w2FM/CE2WXlsl2E9bbEYl9FMtiptQmMJCkrBqoQM49J4QpEYdn9akHYYw/wcGa56/zJupOw==}
+  /decky-frontend-lib@3.20.7:
+    resolution: {integrity: sha512-Zwwbo50cqpTbCfSCZaqITgTRvWs7pK9KO1A+Oo2sCC/DqOfyUtEH5niNPid4Qxu+yh4lsbEjTurJk1nCfd+nZw==}
     dev: false
 
   /dedent@0.7.0:
