@@ -9,10 +9,10 @@ class Plugin:
 
     # A normal method. It can be called from JavaScript using call_plugin_function("method_2", argument1, argument2)
     async def get_paired_devices(self):
-        bctl_version = re.split(r'[0-9]+', subprocess.run(["bluetoothctl", "version"], timeout=10, text=True, capture_output=True).stdout)
+        bctl_version = re.findall(r'[0-9]+', subprocess.run(["bluetoothctl", "version"], timeout=10, text=True, capture_output=True).stdout)
         if len(bctl_version) == 2 and int(bctl_version[0]) >= 5 and int(bctl_version[1]) >= 66:
             devices = subprocess.run(["bluetoothctl", "devices", "Paired"], timeout=10, text=True, capture_output=True).stdout
-        else
+        else:
             devices = subprocess.run(["bluetoothctl", "paired-devices"],timeout=10, text=True, capture_output=True).stdout
         return devices
 
