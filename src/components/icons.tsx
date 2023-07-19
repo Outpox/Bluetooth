@@ -15,5 +15,5 @@ export const GamepadIcon = Object.values(IconsModule).find((mod: any) =>
 ) as FC<SVGAttributes<SVGElement>>;
 
 export const KeyboardIcon = Object.values(IconsModule).find((mod: any) =>
-  mod?.toString && /\.createElement\(\"path\",{d:\"M2 9H34V27H2V9ZM5 /.test(mod.toString())
+  mod?.toString && /d:\"M2 9H34V27H2V9ZM5 /.test(mod.toString())
 ) as FC<SVGAttributes<SVGElement>>;
