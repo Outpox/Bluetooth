@@ -3,7 +3,7 @@ import { ReactElement, VFC } from 'react';
 import { Backend } from '../server';
 import { i18n } from '../utils';
 import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon } from './icons';
-import { PiMouseBold } from 'react-icons/Pi';
+import { PiMouseBold } from 'react-icons/pi';
 
 export interface Device {
   mac: string;
