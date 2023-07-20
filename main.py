@@ -11,7 +11,7 @@ class Plugin:
     async def get_paired_devices(self):
         bctl_version = re.findall(r'[0-9]+', subprocess.run(["bluetoothctl", "version"], timeout=10, text=True, capture_output=True).stdout)
         # Check for bluetoothctl version greater or equal to 5.66 (always true if mayor is > 5)
-        if len(bctl_version) == 2 and (int(bctl_version[0]) > 5 or (bctl_version[0] == 5 and int(bctl_version[1]) >= 66)):
+        if len(bctl_version) == 2 and (int(bctl_version[0]) > 5 or (int(bctl_version[0]) == 5 and int(bctl_version[1]) >= 66)):
             devices = subprocess.run(["bluetoothctl", "devices", "Paired"], timeout=10, text=True, capture_output=True).stdout
         else:
             devices = subprocess.run(["bluetoothctl", "paired-devices"],timeout=10, text=True, capture_output=True).stdout
