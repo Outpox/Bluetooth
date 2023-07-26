@@ -2,7 +2,8 @@ import { Field } from 'decky-frontend-lib';
 import { ReactElement, VFC } from 'react';
 import { Backend } from '../server';
 import { i18n } from '../utils';
-import { BluetoothIcon, GamepadIcon, HeadsetIcon } from './icons';
+import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon } from './icons';
+import { PiMouseBold } from 'react-icons/pi';
 
 export interface Device {
   mac: string;
@@ -30,6 +31,10 @@ export const Device: VFC<{
         return <HeadsetIcon/>;
       case 'audio-headphones':
         return <HeadsetIcon/>;
+      case 'input-keyboard':
+        return <KeyboardIcon/>;
+      case 'input-mouse':
+        return <PiMouseBold/>;
       default:
         return <BluetoothIcon/>;
     }
