@@ -1,3 +1,5 @@
+/// <reference types="../typings/index.d.ts"/>
+
 import {
   definePlugin,
   Field,
