@@ -62,7 +62,7 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
         flex-grow: 1 !important;
       }
 
-      #bluetooth div[class^="quickaccesscontrols_PanelSection_"] {
+      #bluetooth > div {
         margin-bottom: 0;
       }
 
@@ -78,20 +78,11 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
         color: #67707b;
       }
 
-      /* Force Fields content to be left aligned */
-      .no-flex-grow > div[class^="gamepaddialog_FieldLabelRow_"] {
+      .device > div:first-child {
         justify-content: flex-start;
       }
-      .no-flex-grow > div[class^="gamepaddialog_FieldLabelRow_"] > div[class^="gamepaddialog_FieldLabel_"] {
-        flex-grow: 0;
-      }
-      .no-flex-grow > div[class^="gamepaddialog_FieldLabelRow_"] > div[class^="gamepaddialog_FieldChildren_"] {
-        max-width: calc(100% - calc(32px + var(--field-row-children-spacing)))
-      }
-
-      .closer-description > div[class^="gamepaddialog_FieldDescription_"] {
-        margin-top: 0;
-        margin-left: calc(36px + var(--field-row-children-spacing));
+      .device > div > div:first-child {
+        max-width: 32px;
       }
     ` }} />
       <PanelSection>

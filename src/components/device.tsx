@@ -50,7 +50,7 @@ export const Device: VFC<{
       description={device.connected
         ? <span className='connected uppercase'>{i18n('Settings_Bluetooth_Connected')}</span>
         : <span className='disconnected uppercase'>{i18n('Settings_Bluetooth_NotConnected')}</span>}
-      className={`no-flex-grow closer-description ${device.connected ? 'connected' : 'disconnected'}`}
+      className={`device ${device.connected ? 'connected' : 'disconnected'}`}
       icon={getIcon()}
       onClick={toggleDeviceConnection}
     >
