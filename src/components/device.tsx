@@ -2,7 +2,8 @@ import { Field, Router } from 'decky-frontend-lib';
 import { MouseEventHandler, MutableRefObject, ReactElement, useEffect, useRef, VFC } from 'react';
 import { Backend } from '../server';
 import { i18n } from '../utils';
-import { BluetoothIcon, GamepadIcon, HeadsetIcon } from './icons';
+import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon } from './icons';
+import { PiMouseBold } from 'react-icons/pi';
 
 export interface Device {
   mac: string;
@@ -33,6 +34,10 @@ export const Device: VFC<{
         return <HeadsetIcon style={iconStyle}/>;
       case 'audio-headphones':
         return <HeadsetIcon style={iconStyle}/>;
+      case 'input-keyboard':
+        return <KeyboardIcon style={iconStyle}/>;
+      case 'input-mouse':
+        return <PiMouseBold style={iconStyle}/>;
       default:
         return <BluetoothIcon style={iconStyle}/>;
     }
@@ -99,7 +104,7 @@ export const Device: VFC<{
       description={device.connected
         ? <span className='connected uppercase'>{i18n('Settings_Bluetooth_Connected')}</span>
         : <span className='disconnected uppercase'>{i18n('Settings_Bluetooth_NotConnected')}</span>}
-      className={`no-flex-grow closer-description ${device.connected ? 'connected' : 'disconnected'}`}
+      className={`device ${device.connected ? 'connected' : 'disconnected'}`}
       icon={getIcon()}
       onClick={handleClick}
       onTouchStart={startTimer}
