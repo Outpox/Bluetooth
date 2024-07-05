@@ -28,12 +28,12 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
     return newValue;
   }, []);
 
-  SteamClient.System.Bluetooth.RegisterForStateChanges(change => {
+  SteamClient.System.Bluetooth && SteamClient.System.Bluetooth.RegisterForStateChanges(change => {
     setStatus(change.bEnabled);
   });
 
   const toggleBluetooth = () => {
-    void SteamClient.System.Bluetooth.SetEnabled(!status);
+    SteamClient.System.Bluetooth && SteamClient.System.Bluetooth.SetEnabled(!status);
   };
 
   const refreshStatus = async (backend: Backend, delay = 0) => {
