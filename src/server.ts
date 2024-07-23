@@ -40,6 +40,11 @@ export class Backend {
     return parseDevicesInfo(pairedDevicesWithInfo);
   }
 
+  async toggleBluetooth(status: boolean) {
+    const state = status ? 'off' : 'on';
+    await this.serverAPI.callPluginMethod('toggle_bluetooth', { state });
+  }
+
   async toggleDeviceConnection(device: Device) {
     return this.serverAPI.callPluginMethod('toggle_device_connection', { device: device.mac, connected: device.connected });
   }

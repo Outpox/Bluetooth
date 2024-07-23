@@ -28,12 +28,22 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
     return newValue;
   }, []);
 
-  SteamClient.System.Bluetooth.RegisterForStateChanges(change => {
-    setStatus(change.bEnabled);
-  });
+  try {
+    SteamClient.System.Bluetooth.RegisterForStateChanges(change => {
+      setStatus(change.bEnabled);
+    });
+  } catch (error) {
+    console.log('SteamClient.System.Bluetooth unavailable, cannot monitor bluetooth for change');
+  }
 
-  const toggleBluetooth = () => {
-    void SteamClient.System.Bluetooth.SetEnabled(!status);
+  const toggleBluetooth = (backend: Backend) => {
+    try {
+      void SteamClient.System.Bluetooth.SetEnabled(!status);
+    } catch (error) {
+      backend.toggleBluetooth(status).finally(() => {
+        void refreshStatus(backend, 0);
+      });
+    }
   };
 
   const refreshStatus = async (backend: Backend, delay = 0) => {
@@ -90,7 +100,7 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
           <ToggleField
             label='Bluetooth'
             checked={status}
-            onChange={toggleBluetooth}
+            onChange={() => toggleBluetooth(backend)}
           />
         </PanelSectionRow>
 
