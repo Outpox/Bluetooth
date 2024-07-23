@@ -1,6 +1,6 @@
 {
   "name": "Bluetooth",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Bluetooth controls",
   "scripts": {
     "build": "shx rm -rf dist && rollup -c",
