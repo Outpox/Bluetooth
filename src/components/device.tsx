@@ -17,12 +17,7 @@ export const Device: VFC<{
   backend: Backend;
   refresh: () => void;
   setLoading: (state: boolean) => void;
-}> = ({
-  device,
-  backend,
-  refresh,
-  setLoading,
-}) => {
+}> = ({ device, backend, refresh, setLoading }) => {
   const getIcon = (): ReactElement => {
     switch (device.icon) {
       case 'input-gaming':
@@ -52,30 +47,21 @@ export const Device: VFC<{
   return (
     <>
       <PanelSectionRow>
-        <Focusable noFocusRing={true} className="custom-container" flow-children='row'>
-          <Focusable
-            onActivate={connect}
-            className='connect-container'
-            noFocusRing={false}
-          >
-            <div className='device-icon'>{getIcon()}</div>
+        <Focusable noFocusRing={true} className="custom-container" flow-children="row">
+          <Focusable onActivate={connect} className="connect-container" noFocusRing={false}>
+            <div className="device-icon">{getIcon()}</div>
             <div className={`device-info ${device.connected ? 'connected' : 'disconnected'}`}>
-              <div className="device-name">
-                {device.name}
-              </div>
+              <div className="device-name">{device.name}</div>
               <div className="device-status">
-                {device.connected
-                  ? <span className='uppercase'>{i18n('Settings_Bluetooth_Connected')}</span>
-                  : <span className='uppercase'>{i18n('Settings_Bluetooth_NotConnected')}</span>}
+                {device.connected ? (
+                  <span className="uppercase">{i18n('Settings_Bluetooth_Connected')}</span>
+                ) : (
+                  <span className="uppercase">{i18n('Settings_Bluetooth_NotConnected')}</span>
+                )}
               </div>
             </div>
           </Focusable>
-          <Focusable
-            flow-children='horizontal'
-            onActivate={settings}
-            className='options-container'
-            noFocusRing={false}
-          >
+          <Focusable flow-children="horizontal" onActivate={settings} className="options-container" noFocusRing={false}>
             <div className="options-btn">
               <SettingsIcon />
             </div>

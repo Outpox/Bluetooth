@@ -6,7 +6,7 @@
     "build": "shx rm -rf dist && rollup -c",
     "watch": "rollup -c -w",
     "test": "jest",
-    "format": "prettier --write \"{lib,bin,test,typings,utils}/**/*.ts\""
+    "format": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "repository": {
     "type": "git",

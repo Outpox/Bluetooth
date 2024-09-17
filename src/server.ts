@@ -39,8 +39,9 @@ export class Backend {
     const pairedDevices = await this.getPairedDevices();
     const pairedDevicesWithInfo = await Promise.all(
       pairedDevices.map(
-        async pairedDevice => (await this.serverAPI.callPluginMethod('get_device_info', { device: pairedDevice.mac })).result as string
-      )
+        async pairedDevice =>
+          (await this.serverAPI.callPluginMethod('get_device_info', { device: pairedDevice.mac })).result as string,
+      ),
     );
     return parseDevicesInfo(pairedDevicesWithInfo);
   }
@@ -51,6 +52,9 @@ export class Backend {
   }
 
   async toggleDeviceConnection(device: Device) {
-    return this.serverAPI.callPluginMethod('toggle_device_connection', { device: device.mac, connected: device.connected });
+    return this.serverAPI.callPluginMethod('toggle_device_connection', {
+      device: device.mac,
+      connected: device.connected,
+    });
   }
 }

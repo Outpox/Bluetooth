@@ -63,28 +63,23 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
   }, []);
 
   return (
-    <div id='bluetooth'>
-      <style dangerouslySetInnerHTML={{ __html: css }}/>
+    <div id="bluetooth">
+      <style dangerouslySetInnerHTML={{ __html: css }} />
       <PanelSection>
         <PanelSectionRow>
-          <ToggleField
-            label='Bluetooth'
-            checked={status}
-            onChange={() => toggleBluetooth(backend)}
-          />
+          <ToggleField label="Bluetooth" checked={status} onChange={() => toggleBluetooth(backend)} />
         </PanelSectionRow>
 
         <PanelSectionRow>
-          <Field
-            className="devicesTitle"
-            label={i18n('Settings_Bluetooth_Devices')}>
+          <Field className="devicesTitle" label={i18n('Settings_Bluetooth_Devices')}>
             <Spinner loading={loading} refresh={() => refreshStatus(backend, 300)} />
           </Field>
         </PanelSectionRow>
       </PanelSection>
       <PanelSection>
         {devices.map(device => (
-          <Device key={device.mac}
+          <Device
+            key={device.mac}
             device={device}
             backend={backend}
             refresh={() => refreshStatus(backend, 0)}
@@ -102,12 +97,12 @@ export default definePlugin((serverApi: ServerAPI) => {
 
   serverApi.routerHook.addRoute(DeviceSettingsRoute, DevicePage);
 
-  return ({
+  return {
     title: <div className={staticClasses.Title}>Bluetooth</div>,
     content: <Content backend={backend} />,
     icon: <BluetoothIcon style={{ width: '1em' }} />,
     onDismount() {
       serverApi.routerHook.removeRoute(DeviceSettingsRoute);
     },
-  });
+  };
 });

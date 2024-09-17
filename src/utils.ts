@@ -7,11 +7,10 @@ export function parseBluetoothStatus(output: string) {
 
 export function parseDevices(output: string): PairedDevices[] {
   console.log('output: ', output);
-  return [...output.matchAll(/Device (([0-9A-F]{2}[:-]){5}([0-9A-F]{2})) (.*)$/gmi)]
-    .map(captureGroups => ({
-      mac: captureGroups[1],
-      name: captureGroups[4] || 'Unnamed device',
-    }));
+  return [...output.matchAll(/Device (([0-9A-F]{2}[:-]){5}([0-9A-F]{2})) (.*)$/gim)].map(captureGroups => ({
+    mac: captureGroups[1],
+    name: captureGroups[4] || 'Unnamed device',
+  }));
 }
 
 export function parseDevicesInfo(output: string[]): Device[] {
@@ -26,9 +25,7 @@ export function parseDevicesInfo(output: string[]): Device[] {
 
 export function i18n(key: string) {
   const val = LocalizationManager.m_mapTokens.get(key);
-  return val
-    ? val
-    : LocalizationManager.m_mapFallbackTokens.get(key)!;
+  return val ? val : LocalizationManager.m_mapFallbackTokens.get(key)!;
 }
 
 export interface PairedDevices {
