@@ -3,7 +3,7 @@ export declare global {
     System: {
       Bluetooth: {
         SetEnabled: (enabled: boolean) => Promise<void>;
-        RegisterForStateChanges: ((cb: (change: BluetoothStateChange) => void) => undefined);
+        RegisterForStateChanges: (cb: (change: BluetoothStateChange) => void) => undefined;
       };
     };
   };
@@ -21,7 +21,7 @@ export interface BluetoothStateChange {
   vecDevices: Device[];
 }
 
-private interface BluetoothEntity {
+interface BluetoothEntity {
   nId: number;
   sMAC: string;
   sName: string;
@@ -49,5 +49,5 @@ export enum BluetoothDeviceType {
   8 = 'k_BluetoothDeviceType_Mouse',
   9 = 'k_BluetoothDeviceType_Joystick',
   10 = 'k_BluetoothDeviceType_Gamepad',
-  11 = 'k_BluetoothDeviceType_Keyboard'
+  11 = 'k_BluetoothDeviceType_Keyboard',
 }

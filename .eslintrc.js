@@ -8,7 +8,7 @@ module.exports = {
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
   plugins: ['@typescript-eslint'],
   root: true,
-  ignorePatterns: ['.eslintrc.js', 'jest.config.js'],
+  ignorePatterns: ['.eslintrc.js', 'jest.config.js', 'rollup.config.js'],
   rules: {
     'indent': [
       'warn',

@@ -5,6 +5,7 @@ import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
 import { defineConfig } from 'rollup';
 import importAssets from 'rollup-plugin-import-assets';
+import sass from 'rollup-plugin-sass';
 
 import { name } from "./plugin.json";
 
@@ -15,6 +16,7 @@ export default defineConfig({
     nodeResolve(),
     typescript(),
     json(),
+    sass(),
     replace({
       preventAssignment: false,
       'process.env.NODE_ENV': JSON.stringify('production'),
