@@ -1,0 +1,71 @@
+@import '../utils.scss';
+
+.custom-container {
+  display: flex;
+  padding: 0;
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -0.5px;
+    height: 1px;
+    width: 100%;
+    background: rgba(255,255,255,.1);
+  }
+
+  .gpfocus {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .connect-container {
+    display: flex;
+    width: 95%;
+    padding: 10px 0;
+
+    .device-icon {
+      display: flex;
+      width: 15%;
+
+      svg {
+        width: 24px;
+      }
+    }
+
+    .device-info {
+      display: flex;
+      flex-direction: column;
+
+      &.connected {
+        color: $color_light_gray;
+      }
+
+      &.disconnected {
+        color: $color_dark_gray;
+      }
+
+      .device-name {
+        width: 100%;
+      }
+
+      .device-status {
+        width: 100%;
+      }
+    }
+  }
+
+  .options-container {
+    display: flex;
+    width: 5%;
+    justify-content: center;
+    color: $color_light_gray;
+
+    .options-btn {
+      display: flex;
+
+      svg {
+        width: 12px;
+      }
+    }
+  }
+}

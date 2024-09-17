@@ -1,0 +1,26 @@
+@use './components/device.scss';
+
+@import './utils.scss';
+
+#QuickAccess-Menu {
+	>div[class^="quickaccessmenu_Menu_"].Panel.Focusable {
+		>div[class^="quickaccessmenu_PanelOuterNav_"].Panel.Focusable {
+			>div {
+				>div[class^="quickaccessmenu_ContentTransition_"][class*="quickaccessmenu_ActiveTab_"] {
+					>div {
+						>div[class^="quickaccessmenu_Title_"] {
+							>div {
+								flex-grow: 1 !important;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+#bluetooth {
+	>div {
+		margin-bottom: 0;
+	}
+}

@@ -1,8 +1,8 @@
-import { Field, Router } from 'decky-frontend-lib';
-import { MouseEventHandler, MutableRefObject, ReactElement, useEffect, useRef, VFC } from 'react';
+import { Focusable, PanelSectionRow, Router } from 'decky-frontend-lib';
+import { ReactElement, VFC } from 'react';
 import { Backend } from '../server';
 import { i18n } from '../utils';
-import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon } from './icons';
+import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon, SettingsIcon, XboxControllerIcon } from './deckIcons';
 import { PiMouseBold } from 'react-icons/pi';
 
 export interface Device {
@@ -23,96 +23,65 @@ export const Device: VFC<{
   refresh,
   setLoading,
 }) => {
-  const iconStyle: React.CSSProperties = {
-    transform: 'translateY(10px)',
-  };
   const getIcon = (): ReactElement => {
     switch (device.icon) {
       case 'input-gaming':
-        return <GamepadIcon style={iconStyle}/>;
+        return device.name.toLocaleLowerCase().includes('xbox') ? <XboxControllerIcon /> : <GamepadIcon />;
       case 'audio-headset':
-        return <HeadsetIcon style={iconStyle}/>;
+        return <HeadsetIcon />;
       case 'audio-headphones':
-        return <HeadsetIcon style={iconStyle}/>;
+        return <HeadsetIcon />;
       case 'input-keyboard':
-        return <KeyboardIcon style={iconStyle}/>;
+        return <KeyboardIcon />;
       case 'input-mouse':
-        return <PiMouseBold style={iconStyle}/>;
+        return <PiMouseBold />;
       default:
-        return <BluetoothIcon style={iconStyle}/>;
+        return <BluetoothIcon />;
     }
   };
 
-  const longPress = useRef(false);
-  const timer: MutableRefObject<NodeJS.Timeout|undefined> = useRef();
-
-  const startTimer = () => {
-    longPress.current = false;
-    timer.current = setTimeout(() => {
-      longPress.current = true;
-      handleLongPress();
-    }, 500);
-  };
-
-  const stopTimer = () => {
-    clearTimeout(timer.current);
-  };
-
-  const handleClick: MouseEventHandler = e => {
-    if (e.type === 'vgp_onok') {
-      e.preventDefault();
-      return;
-    }
+  const connect = () => {
     setLoading(true);
     void backend.toggleDeviceConnection(device).then(refresh);
   };
 
-  const handleLongPress = () => {
+  const settings = () => {
     Router.Navigate('/device-settings/' + device.mac);
   };
 
-  type vgp_event = Event & {
-    detail: {
-      button: number;
-      source: number;
-      is_repeat: boolean|undefined;
-    };
-  }
-
-  const elementRef: MutableRefObject<HTMLDivElement|null> = useRef(null);
-  useEffect(() => {
-    elementRef.current?.addEventListener('vgp_onbuttondown', e => {
-      const se = e as vgp_event;
-      if (se.detail.button === 1) {
-        startTimer();
-      }
-    });
-    elementRef.current?.addEventListener('vgp_onbuttonup', e => {
-      const se = e as vgp_event;
-      if (se.detail.button === 1) {
-        stopTimer();
-        if (!longPress.current) {
-          handleClick(e as any);
-        }
-      }
-    });
-  }, []);
-
   return (
-    <Field
-      ref={elementRef}
-      description={device.connected
-        ? <span className='connected uppercase'>{i18n('Settings_Bluetooth_Connected')}</span>
-        : <span className='disconnected uppercase'>{i18n('Settings_Bluetooth_NotConnected')}</span>}
-      className={`device ${device.connected ? 'connected' : 'disconnected'}`}
-      icon={getIcon()}
-      onClick={handleClick}
-      onTouchStart={startTimer}
-      onTouchEnd={stopTimer}
-      onMouseDown={startTimer}
-      onMouseUp={stopTimer}
-    >
-      <span>{device.name}</span>
-    </Field>
+    <>
+      <PanelSectionRow>
+        <Focusable noFocusRing={true} className="custom-container" flow-children='row'>
+          <Focusable
+            onActivate={connect}
+            className='connect-container'
+            noFocusRing={false}
+          >
+            <div className='device-icon'>{getIcon()}</div>
+            <div className={`device-info ${device.connected ? 'connected' : 'disconnected'}`}>
+              <div className="device-name">
+                {device.name}
+              </div>
+              <div className="device-status">
+                {device.connected
+                  ? <span className='uppercase'>{i18n('Settings_Bluetooth_Connected')}</span>
+                  : <span className='uppercase'>{i18n('Settings_Bluetooth_NotConnected')}</span>}
+              </div>
+            </div>
+          </Focusable>
+          <Focusable
+            flow-children='horizontal'
+            onActivate={settings}
+            className='options-container'
+            noFocusRing={false}
+          >
+            <div className="options-btn">
+              <SettingsIcon />
+            </div>
+          </Focusable>
+        </Focusable>
+      </PanelSectionRow>
+    </>
   );
 };

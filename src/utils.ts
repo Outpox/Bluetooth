@@ -1,10 +1,12 @@
 import { Device } from './components/device';
 
 export function parseBluetoothStatus(output: string) {
+  console.log('output: ', output);
   return (/Powered: (.*)/.exec(output) ?? [])[1] === 'yes';
 }
 
 export function parseDevices(output: string): PairedDevices[] {
+  console.log('output: ', output);
   return [...output.matchAll(/Device (([0-9A-F]{2}[:-]){5}([0-9A-F]{2})) (.*)$/gmi)]
     .map(captureGroups => ({
       mac: captureGroups[1],

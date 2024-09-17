@@ -2,11 +2,9 @@
 
 import {
   definePlugin,
-  ButtonItem,
   Field,
   PanelSection,
   PanelSectionRow,
-  Router,
   ServerAPI,
   sleep,
   staticClasses,
@@ -18,8 +16,9 @@ import { Device } from './components/device';
 import { Spinner } from './components/spinner';
 import { Backend } from './server';
 import { i18n } from './utils';
-import { BluetoothIcon } from './components/icons';
+import { BluetoothIcon } from './components/deckIcons';
 import { DevicePage } from './pages/device';
+import css from './index.scss';
 
 const Content: VFC<{ backend: Backend }> = ({ backend }) => {
   const [status, setStatus] = useState<boolean>(false);
@@ -36,7 +35,7 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
       setStatus(change.bEnabled);
     });
   } catch (error) {
-    console.log('SteamClient.System.Bluetooth unavailable, cannot monitor bluetooth for change');
+    console.warn('SteamClient.System.Bluetooth unavailable, cannot monitor bluetooth for change');
   }
 
   const toggleBluetooth = (backend: Backend) => {
@@ -65,39 +64,7 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
 
   return (
     <div id='bluetooth'>
-      <style dangerouslySetInnerHTML={{
-        __html: `
-      #QuickAccess-Menu > div[class^="quickaccessmenu_Menu_"].Panel.Focusable >
-      div[class^="quickaccessmenu_PanelOuterNav_"].Panel.Focusable >
-      div > div[class^="quickaccessmenu_ContentTransition_"][class*="quickaccessmenu_ActiveTab_"] >
-      div > div[class^="quickaccessmenu_Title_"] > div {
-        /* Force plugin title to be on a single line */
-        flex-grow: 1 !important;
-      }
-
-      #bluetooth > div {
-        margin-bottom: 0;
-      }
-
-      .uppercase {
-        text-transform: uppercase;
-      }
-      
-      .status, .devicesTitle, .connected {
-        color: #dcdedf;
-      }
-
-      .disconnected {
-        color: #67707b;
-      }
-
-      .device > div:first-child {
-        justify-content: flex-start;
-      }
-      .device > div > div:first-child {
-        max-width: 32px;
-      }
-    ` }} />
+      <style dangerouslySetInnerHTML={{ __html: css }}/>
       <PanelSection>
         <PanelSectionRow>
           <ToggleField
@@ -111,20 +78,18 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
           <Field
             className="devicesTitle"
             label={i18n('Settings_Bluetooth_Devices')}>
-            <Spinner loading={loading} refresh={() => refreshStatus(backend, 300)}/>
+            <Spinner loading={loading} refresh={() => refreshStatus(backend, 300)} />
           </Field>
         </PanelSectionRow>
       </PanelSection>
       <PanelSection>
         {devices.map(device => (
-          <PanelSectionRow>
-            <Device key={device.mac}
-              device={device}
-              backend={backend}
-              refresh={() => refreshStatus(backend, 0)}
-              setLoading={(state: boolean) => setLoading(state)}
-            />
-          </PanelSectionRow>
+          <Device key={device.mac}
+            device={device}
+            backend={backend}
+            refresh={() => refreshStatus(backend, 0)}
+            setLoading={(state: boolean) => setLoading(state)}
+          />
         ))}
       </PanelSection>
     </div>
@@ -140,7 +105,7 @@ export default definePlugin((serverApi: ServerAPI) => {
   return ({
     title: <div className={staticClasses.Title}>Bluetooth</div>,
     content: <Content backend={backend} />,
-    icon: <BluetoothIcon style={{ width: '1em' }}/>,
+    icon: <BluetoothIcon style={{ width: '1em' }} />,
     onDismount() {
       serverApi.routerHook.removeRoute(DeviceSettingsRoute);
     },
