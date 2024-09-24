@@ -5,7 +5,7 @@ import { Device } from '../components/device';
 import { Backend } from '../server';
 
 // export const DevicePage: VFC<{device: Device}> = ({ device }) => {
-export const DevicePage: VFC = () => {
+export const DeviceSettingsPage: VFC = () => {
   const backend = Backend.instance;
   const [device, setDevice] = useState<Device>();
   const mainDiv: MutableRefObject<HTMLDivElement | null> = useRef(null);
@@ -13,7 +13,7 @@ export const DevicePage: VFC = () => {
   useEffect(() => {
     const deviceMac = window.location.href.substring(window.location.href.length - 17);
     void backend.getPairedDeviceWithInfo(deviceMac).then(d => {
-      console.log('d: ', d);
+      // console.log('d: ', d);
       setDevice(d);
       Router.CloseSideMenus();
     });

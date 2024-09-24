@@ -1,34 +1,19 @@
-import { Device } from './components/device';
-
-export function parseBluetoothStatus(output: string) {
-  console.log('output: ', output);
-  return (/Powered: (.*)/.exec(output) ?? [])[1] === 'yes';
-}
-
-export function parseDevices(output: string): PairedDevices[] {
-  console.log('output: ', output);
-  return [...output.matchAll(/Device (([0-9A-F]{2}[:-]){5}([0-9A-F]{2})) (.*)$/gim)].map(captureGroups => ({
-    mac: captureGroups[1],
-    name: captureGroups[4] || 'Unnamed device',
-  }));
-}
-
-export function parseDevicesInfo(output: string[]): Device[] {
-  // Might be interesting to return the alias instead of name if defined.
-  return output.map(device => ({
-    mac: /Device (([0-9A-F]{2}[:-]){5}([0-9A-F]{2}))/.exec(device)![1],
-    name: (/Name: (.*)/.exec(device) ?? [])[1] || 'Unnamed device',
-    connected: /Connected: yes/.test(device),
-    icon: (/Icon: (.*)/.exec(device) ?? [])[1] || '',
-  }));
-}
+import { customizeDecorator } from 'ts-retry-promise';
+import { TimeoutError } from './backend/errors';
 
 export function i18n(key: string) {
   const val = LocalizationManager.m_mapTokens.get(key);
   return val ? val : LocalizationManager.m_mapFallbackTokens.get(key)!;
 }
 
-export interface PairedDevices {
-  mac: string;
-  name: string;
-}
+export const retryWithTO = <T>(fn: () => Promise<T>) => {
+  const timeout = customizeDecorator({ timeout: 2000 });
+  const retry = customizeDecorator({ retries: 2 });
+
+  return retry(timeout(fn))().catch(error => {
+    if (error.message.includes('Timeout')) {
+      throw new TimeoutError('Timeout');
+    }
+    throw error;
+  });
+};

@@ -17,7 +17,7 @@ import { Spinner } from './components/spinner';
 import { Backend } from './server';
 import { i18n } from './utils';
 import { BluetoothIcon } from './components/deckIcons';
-import { DevicePage } from './pages/device';
+import { DeviceSettingsPage } from './pages/deviceSettings';
 import css from './index.scss';
 
 const Content: VFC<{ backend: Backend }> = ({ backend }) => {
@@ -29,14 +29,6 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
     }
     return newValue;
   }, []);
-
-  try {
-    SteamClient.System.Bluetooth.RegisterForStateChanges(change => {
-      setStatus(change.bEnabled);
-    });
-  } catch (error) {
-    console.warn('SteamClient.System.Bluetooth unavailable, cannot monitor bluetooth for change');
-  }
 
   const toggleBluetooth = (backend: Backend) => {
     try {
@@ -59,6 +51,14 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
   };
 
   useEffect(() => {
+    try {
+      SteamClient.System.Bluetooth.RegisterForStateChanges(change => {
+        setStatus(change.bEnabled);
+      });
+    } catch (error) {
+      console.warn('SteamClient.System.Bluetooth unavailable, cannot monitor bluetooth for change');
+    }
+
     void refreshStatus(backend, 0);
   }, []);
 
@@ -95,7 +95,7 @@ export default definePlugin((serverApi: ServerAPI) => {
   const backend = Backend.initialize(serverApi);
   const DeviceSettingsRoute = '/device-settings/:deviceMac';
 
-  serverApi.routerHook.addRoute(DeviceSettingsRoute, DevicePage);
+  serverApi.routerHook.addRoute(DeviceSettingsRoute, DeviceSettingsPage);
 
   return {
     title: <div className={staticClasses.Title}>Bluetooth</div>,

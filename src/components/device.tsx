@@ -10,6 +10,7 @@ export interface Device {
   name: string;
   connected: boolean;
   icon: string;
+  [key: string]: unknown;
 }
 
 export const Device: VFC<{
