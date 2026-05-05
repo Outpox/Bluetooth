@@ -1,7 +1,7 @@
 {
   "name": "Bluetooth",
   "author": "Outpox",
-  "flags": ["debug"],
+  "flags": [],
   "publish": {
     "tags": ["bluetooth", "utility"],
     "description": "Quickly connect to your already paired bluetooth devices.",
