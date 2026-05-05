@@ -40,3 +40,11 @@ __pycache__/
 yalc.lock
 
 .vscode/settings.json
+
+.pnpm-store
+backend/out
+decky_plugin.py
+out/
+out/*
+cli/
+cli/*

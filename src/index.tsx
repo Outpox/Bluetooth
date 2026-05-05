@@ -1,24 +1,22 @@
-/// <reference types="../typings/index.d.ts"/>
-
 import {
   definePlugin,
   Field,
   PanelSection,
   PanelSectionRow,
-  ServerAPI,
-  sleep,
   staticClasses,
   ToggleField,
-} from 'decky-frontend-lib';
-import { useEffect, useReducer, useState, VFC } from 'react';
+} from '@decky/ui';
+import { useEffect, useReducer, useState } from 'react';
 import isEqual from 'lodash.isequal';
 import { Device } from './components/device';
 import { Spinner } from './components/spinner';
-import { Backend } from './server';
+import { getBluetoothStatus, getPairedDevicesWithInfo, toggleBluetooth } from './server';
 import { i18n } from './utils';
 import { BluetoothIcon } from './components/icons';
 
-const Content: VFC<{ backend: Backend }> = ({ backend }) => {
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+function Content() {
   const [status, setStatus] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [devices, setDevices] = useReducer((previousValue: Device[], newValue: Device[]) => {
@@ -28,36 +26,24 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
     return newValue;
   }, []);
 
-  try {
-    SteamClient.System.Bluetooth.RegisterForStateChanges(change => {
-      setStatus(change.bEnabled);
+  const handleToggleBluetooth = () => {
+    void toggleBluetooth(status).finally(() => {
+      void refreshStatus(0);
     });
-  } catch (error) {
-    console.log('SteamClient.System.Bluetooth unavailable, cannot monitor bluetooth for change');
-  }
-
-  const toggleBluetooth = (backend: Backend) => {
-    try {
-      void SteamClient.System.Bluetooth.SetEnabled(!status);
-    } catch (error) {
-      backend.toggleBluetooth(status).finally(() => {
-        void refreshStatus(backend, 0);
-      });
-    }
   };
 
-  const refreshStatus = async (backend: Backend, delay = 0) => {
+  const refreshStatus = async (delay = 0) => {
     setLoading(true);
 
     await sleep(delay);
-    setStatus(await backend.getBluetoothStatus());
-    setDevices(await backend.getPairedDevicesWithInfo());
+    setStatus(await getBluetoothStatus());
+    setDevices(await getPairedDevicesWithInfo());
 
     setLoading(false);
   };
 
   useEffect(() => {
-    void refreshStatus(backend, 0);
+    void refreshStatus(0);
   }, []);
 
   return (
@@ -100,7 +86,7 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
           <ToggleField
             label='Bluetooth'
             checked={status}
-            onChange={() => toggleBluetooth(backend)}
+            onChange={handleToggleBluetooth}
           />
         </PanelSectionRow>
 
@@ -108,17 +94,16 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
           <Field
             className="devicesTitle"
             label={i18n('Settings_Bluetooth_Devices')}>
-            <Spinner loading={loading} refresh={() => refreshStatus(backend, 300)}/>
+            <Spinner loading={loading} refresh={() => refreshStatus(300)}/>
           </Field>
         </PanelSectionRow>
       </PanelSection>
       <PanelSection>
         {devices.map(device => (
-          <PanelSectionRow>
-            <Device key={device.mac}
+          <PanelSectionRow key={device.mac}>
+            <Device
               device={device}
-              backend={backend}
-              refresh={() => refreshStatus(backend, 0)}
+              refresh={() => refreshStatus(0)}
               setLoading={(state: boolean) => setLoading(state)}
             />
           </PanelSectionRow>
@@ -126,14 +111,12 @@ const Content: VFC<{ backend: Backend }> = ({ backend }) => {
       </PanelSection>
     </div>
   );
-};
+}
 
-export default definePlugin((serverApi: ServerAPI) => {
-  const backend = Backend.initialize(serverApi);
-
-  return ({
+export default definePlugin(() => {
+  return {
     title: <div className={staticClasses.Title}>Bluetooth</div>,
-    content: <Content backend={backend} />,
+    content: <Content />,
     icon: <BluetoothIcon style={{ width: '1em' }}/>,
-  });
+  };
 });

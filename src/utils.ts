@@ -1,5 +1,10 @@
 import { Device } from './components/device';
 
+declare const LocalizationManager: {
+  m_mapTokens: Map<string, string>;
+  m_mapFallbackTokens: Map<string, string>;
+};
+
 export function parseBluetoothStatus(output: string) {
   return (/Powered: (.*)/.exec(output) ?? [])[1] === 'yes';
 }

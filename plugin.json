@@ -1,7 +1,8 @@
 {
-  "name": "Bluetooth",
+  "name": "Bluetooth v2",
   "author": "Outpox",
   "flags": [],
+  "api_version": 1,
   "publish": {
     "tags": ["bluetooth", "utility"],
     "description": "Quickly connect to your already paired bluetooth devices.",

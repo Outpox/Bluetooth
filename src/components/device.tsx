@@ -1,6 +1,6 @@
-import { Field } from 'decky-frontend-lib';
-import { ReactElement, VFC } from 'react';
-import { Backend } from '../server';
+import { Field } from '@decky/ui';
+import { ReactElement } from 'react';
+import { toggleDeviceConnection } from '../server';
 import { i18n } from '../utils';
 import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon } from './icons';
 import { PiMouseBold } from 'react-icons/pi';
@@ -12,17 +12,15 @@ export interface Device {
   icon: string;
 }
 
-export const Device: VFC<{
-  device: Device;
-  backend: Backend;
-  refresh: () => void;
-  setLoading: (state: boolean) => void;
-}> = ({
+export function Device({
   device,
-  backend,
   refresh,
   setLoading,
-}) => {
+}: {
+  device: Device;
+  refresh: () => void;
+  setLoading: (state: boolean) => void;
+}) {
   const getIcon = (): ReactElement => {
     switch (device.icon) {
       case 'input-gaming':
@@ -40,9 +38,9 @@ export const Device: VFC<{
     }
   };
 
-  const toggleDeviceConnection = () => {
+  const handleToggleDeviceConnection = () => {
     setLoading(true);
-    void backend.toggleDeviceConnection(device).then(refresh);
+    void toggleDeviceConnection(device).then(refresh);
   };
 
   return (
@@ -52,9 +50,9 @@ export const Device: VFC<{
         : <span className='disconnected uppercase'>{i18n('Settings_Bluetooth_NotConnected')}</span>}
       className={`device ${device.connected ? 'connected' : 'disconnected'}`}
       icon={getIcon()}
-      onClick={toggleDeviceConnection}
+      onClick={handleToggleDeviceConnection}
     >
       <span>{device.name}</span>
     </Field>
   );
-};
+}
