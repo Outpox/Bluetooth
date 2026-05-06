@@ -2,7 +2,7 @@ import { Focusable, PanelSectionRow, Router } from '@decky/ui';
 import { ReactElement } from 'react';
 import { toggleDeviceConnection } from '../server';
 import { i18n } from '../utils';
-import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon, SettingsIcon, XboxControllerIcon } from './deckIcons';
+import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon, SettingsIcon } from './deckIcons';
 import { PiMouseBold } from 'react-icons/pi';
 
 export interface Device {
@@ -25,7 +25,7 @@ export function Device({
   const getIcon = (): ReactElement => {
     switch (device.icon) {
       case 'input-gaming':
-        return device.name.toLocaleLowerCase().includes('xbox') ? <XboxControllerIcon /> : <GamepadIcon />;
+        return <GamepadIcon />;
       case 'audio-headset':
         return <HeadsetIcon />;
       case 'audio-headphones':
