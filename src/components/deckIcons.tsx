@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { FC, SVGAttributes } from 'react';
 
 // All icons are hardcoded SVGs to avoid the fragile IconsModule regex approach,

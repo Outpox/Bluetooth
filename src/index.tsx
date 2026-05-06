@@ -1,7 +1,7 @@
 import { definePlugin, PanelSection, PanelSectionRow, staticClasses, ToggleField, Field } from '@decky/ui';
 import { routerHook } from '@decky/api';
 import { useEffect, useReducer, useState } from 'react';
-import isEqual from 'lodash.isequal';
+import equal from 'fast-deep-equal';
 import { Device } from './components/device';
 import { Spinner } from './components/spinner';
 import { getBluetoothStatus, getPairedDevicesWithInfo, toggleBluetooth } from './server';
@@ -16,7 +16,7 @@ function Content() {
   const [status, setStatus] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [devices, setDevices] = useReducer((previousValue: Device[], newValue: Device[]) => {
-    if (isEqual(newValue, previousValue)) {
+    if (equal(newValue, previousValue)) {
       return previousValue;
     }
     return newValue;
