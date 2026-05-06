@@ -34,6 +34,17 @@ if [[ "$DOCKER_INSTALLED" =~ "which" ]]; then
     echo "Docker is not currently installed, in order build plugins with a backend you will need to have Docker installed. Please install Docker via the preferred method for your distribution."
 fi
 
+if test -f "$(pwd)/requirements.txt"; then
+    PYTHON_INSTALLED="$(which python3)"
+    if [[ "$PYTHON_INSTALLED" =~ "which" ]]; then
+        echo "python3 is not installed. Please install it to install Python dependencies."
+    else
+        echo "Installing Python dependencies from requirements.txt into py_modules..."
+        python3 -m pip install -r "$(pwd)/requirements.txt" --target "$(pwd)/py_modules"
+        echo "Python dependencies installed."
+    fi
+fi
+
 if ! test -f "$CLI_INSTALLED"; then
     echo "The Decky CLI tool (binary file is just called "decky") is used to build your plugin as a zip file which you can then install on your Steam Deck to perform testing. We highly recommend you install it. Hitting enter now will run the script to install Decky CLI and extract it to a folder called cli in the current plugin directory. You can also type 'no' and hit enter to skip this but keep in mind you will not have a usable plugin without building it."
     read run_cli_script
