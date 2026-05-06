@@ -141,6 +141,34 @@
             "group": "none",
             "command": "ssh ${config:deckuser}@${config:deckip} -p ${config:deckport} ${config:deckkey} 'echo '${config:deckpass}' | sudo -S systemctl restart plugin_loader'",
             "problemMatcher": []
+        },
+        // QUICK INCREMENTAL TASKS (frontend-only, no Docker/zip)
+        {
+            "label": "quick-build",
+            "type": "shell",
+            "group": "build",
+            "detail": "Build frontend only (no Docker, no py_modules)",
+            "command": "pnpm build",
+            "problemMatcher": []
+        },
+        {
+            "label": "quick-deploy",
+            "type": "shell",
+            "group": "none",
+            "detail": "Sync dist/ directly to plugin folder on deck (no zip)",
+            "command": "/opt/homebrew/bin/rsync -azp --rsh='ssh -p ${config:deckport} ${config:deckkey}' dist/ ${config:deckuser}@${config:deckip}:${config:deckdir}/homebrew/plugins/${config:pluginname}/dist/",
+            "problemMatcher": []
+        },
+        {
+            "label": "quick",
+            "detail": "Quick frontend build and deploy (no Docker/zip) — use when only frontend files changed",
+            "dependsOrder": "sequence",
+            "group": "test",
+            "dependsOn": [
+                "quick-build",
+                "quick-deploy"
+            ],
+            "problemMatcher": []
         }
     ]
 }
