@@ -1,8 +1,8 @@
-import { Field } from '@decky/ui';
+import { Focusable, PanelSectionRow, Router } from '@decky/ui';
 import { ReactElement } from 'react';
 import { toggleDeviceConnection } from '../server';
 import { i18n } from '../utils';
-import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon } from './icons';
+import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon, SettingsIcon, XboxControllerIcon } from './deckIcons';
 import { PiMouseBold } from 'react-icons/pi';
 
 export interface Device {
@@ -10,6 +10,7 @@ export interface Device {
   name: string;
   connected: boolean;
   icon: string;
+  [key: string]: unknown;
 }
 
 export function Device({
@@ -24,35 +25,53 @@ export function Device({
   const getIcon = (): ReactElement => {
     switch (device.icon) {
       case 'input-gaming':
-        return <GamepadIcon/>;
+        return device.name.toLocaleLowerCase().includes('xbox') ? <XboxControllerIcon /> : <GamepadIcon />;
       case 'audio-headset':
-        return <HeadsetIcon/>;
+        return <HeadsetIcon />;
       case 'audio-headphones':
-        return <HeadsetIcon/>;
+        return <HeadsetIcon />;
       case 'input-keyboard':
-        return <KeyboardIcon/>;
+        return <KeyboardIcon />;
       case 'input-mouse':
-        return <PiMouseBold/>;
+        return <PiMouseBold />;
       default:
-        return <BluetoothIcon/>;
+        return <BluetoothIcon />;
     }
   };
 
-  const handleToggleDeviceConnection = () => {
+  const connect = () => {
     setLoading(true);
     void toggleDeviceConnection(device).then(refresh);
   };
 
+  const settings = () => {
+    Router.Navigate('/device-settings/' + device.mac);
+  };
+
   return (
-    <Field
-      description={device.connected
-        ? <span className='connected uppercase'>{i18n('Settings_Bluetooth_Connected')}</span>
-        : <span className='disconnected uppercase'>{i18n('Settings_Bluetooth_NotConnected')}</span>}
-      className={`device ${device.connected ? 'connected' : 'disconnected'}`}
-      icon={getIcon()}
-      onClick={handleToggleDeviceConnection}
-    >
-      <span>{device.name}</span>
-    </Field>
+    <>
+      <PanelSectionRow>
+        <Focusable noFocusRing={true} className="custom-container" flow-children="row">
+          <Focusable onActivate={connect} className="connect-container" noFocusRing={false}>
+            <div className="device-icon">{getIcon()}</div>
+            <div className={`device-info ${device.connected ? 'connected' : 'disconnected'}`}>
+              <div className="device-name">{device.name}</div>
+              <div className="device-status">
+                {device.connected ? (
+                  <span className="uppercase">{i18n('Settings_Bluetooth_Connected')}</span>
+                ) : (
+                  <span className="uppercase">{i18n('Settings_Bluetooth_NotConnected')}</span>
+                )}
+              </div>
+            </div>
+          </Focusable>
+          <Focusable flow-children="horizontal" onActivate={settings} className="options-container" noFocusRing={false}>
+            <div className="options-btn">
+              <SettingsIcon />
+            </div>
+          </Focusable>
+        </Focusable>
+      </PanelSectionRow>
+    </>
   );
 }

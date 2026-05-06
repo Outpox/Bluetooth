@@ -1,36 +1,63 @@
-import { callable } from '@decky/api';
 import { Device } from './components/device';
-import { PairedDevices, parseBluetoothStatus, parseDevices, parseDevicesInfo } from './utils';
+import { DeviceInfoError } from './backend/errors';
+import { BluetoothController } from './backend/bluetoothctl';
+import { parseBluetoothStatus, parseDeviceInfo, parseDevices, parseDevicesInfo, PairedDevices } from './backend/parsers';
 
-const _getBluetoothStatus = callable<[], string>('get_bluetooth_status');
-const _getPairedDevices = callable<[], string>('get_paired_devices');
-const _getDeviceInfo = callable<[device: string], string>('get_device_info');
-const _toggleBluetooth = callable<[state: string], string>('toggle_bluetooth');
-const _toggleDeviceConnection = callable<[device: string, connected: boolean], string>('toggle_device_connection');
+export { PairedDevices };
+
+const controller = new BluetoothController();
 
 export async function getBluetoothStatus(): Promise<boolean> {
-  const status = await _getBluetoothStatus();
-  return parseBluetoothStatus(status);
+  return controller
+    .getStatus()
+    .then(response => parseBluetoothStatus(response))
+    .catch(error => {
+      console.error(error);
+      return false;
+    });
 }
 
 export async function getPairedDevices(): Promise<PairedDevices[]> {
-  const response = await _getPairedDevices();
-  return parseDevices(response);
+  return controller
+    .getPairedDevices()
+    .then(response => parseDevices(response))
+    .catch(error => {
+      console.error(error);
+      return [];
+    });
+}
+
+export async function getPairedDeviceWithInfo(mac: string): Promise<Device | DeviceInfoError> {
+  return controller
+    .getDeviceWithInfo(mac)
+    .then(response => parseDevicesInfo([response])[0])
+    .catch((error: DeviceInfoError) => {
+      console.error(error);
+      return error;
+    });
 }
 
 export async function getPairedDevicesWithInfo(): Promise<Device[]> {
   const pairedDevices = await getPairedDevices();
-  const pairedDevicesWithInfo = await Promise.all(
-    pairedDevices.map(pairedDevice => _getDeviceInfo(pairedDevice.mac))
+  const results = await Promise.all(
+    pairedDevices.map(pairedDevice =>
+      controller
+        .getDeviceWithInfo(pairedDevice.mac)
+        .catch(error => {
+          console.error(error);
+          return undefined;
+        }),
+    ),
   );
-  return parseDevicesInfo(pairedDevicesWithInfo);
+  return results
+    .filter((r): r is string => r !== undefined)
+    .map(device => parseDeviceInfo(device));
 }
 
 export async function toggleBluetooth(status: boolean): Promise<void> {
-  const state = status ? 'off' : 'on';
-  await _toggleBluetooth(state);
+  controller.setBluetooth(!status).then(console.log).catch(console.error);
 }
 
-export async function toggleDeviceConnection(device: Device): Promise<string> {
-  return _toggleDeviceConnection(device.mac, device.connected);
+export async function toggleDeviceConnection(device: Device): Promise<void> {
+  controller.setDeviceConnection(device.mac, !device.connected).then(console.log).catch(console.error);
 }

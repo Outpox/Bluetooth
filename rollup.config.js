@@ -1,5 +1,6 @@
-import deckyPlugin from "@decky/rollup";
+import deckyPlugin from '@decky/rollup';
+import sass from 'rollup-plugin-sass';
 
 export default deckyPlugin({
-  // Add your extra Rollup options here
-})
+  plugins: [sass()],
+});

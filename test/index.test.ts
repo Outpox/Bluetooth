@@ -1,6 +1,6 @@
 import mocks from './mocks';
 
-import { parseBluetoothStatus, parseDevices, parseDevicesInfo } from '../src/utils';
+import { parseBluetoothStatus, parseDevices, parseDevicesInfo } from '../src/backend/parsers';
 
 describe('Status', () => {
   test('connected', () => {
