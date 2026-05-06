@@ -69,6 +69,7 @@ function Content() {
 }
 
 export default definePlugin(() => {
+  console.log('[Bluetooth] build:', __BUILD_ID__);
   const DeviceSettingsRoute = '/device-settings/:deviceMac';
   routerHook.addRoute(DeviceSettingsRoute, DeviceSettingsPage);
 
