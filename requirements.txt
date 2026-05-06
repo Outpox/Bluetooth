@@ -1,1 +1,1 @@
-dbus-fast==2.45.1
+jeepney==0.9.0

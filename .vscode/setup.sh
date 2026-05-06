@@ -40,7 +40,9 @@ if test -f "$(pwd)/requirements.txt"; then
         echo "python3 is not installed. Please install it to install Python dependencies."
     else
         echo "Installing Python dependencies from requirements.txt into py_modules..."
-        python3 -m pip install -r "$(pwd)/requirements.txt" --target "$(pwd)/py_modules"
+        rm -rf "$(pwd)/py_modules"
+        mkdir -p "$(pwd)/py_modules"
+        python3 -m pip install -r "$(pwd)/requirements.txt" --target "$(pwd)/py_modules" --no-compile
         echo "Python dependencies installed."
     fi
 fi

@@ -65,7 +65,7 @@ export function Device({
               </div>
             </div>
           </Focusable>
-          <Focusable flow-children="horizontal" onActivate={settings} className="options-container" noFocusRing={false}>
+          <Focusable onActivate={settings} className="options-container" noFocusRing={false}>
             <div className="options-btn">
               <SettingsIcon />
             </div>
