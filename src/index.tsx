@@ -69,7 +69,17 @@ function Content() {
 }
 
 export default definePlugin(() => {
-  console.log('[Bluetooth] build:', __BUILD_ID__);
+  const [epoch, rand] = __BUILD_ID__.split('-');
+  const d = new Date(parseInt(epoch) * 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const buildDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  console.log(
+    '%c Bluetooth %c loaded version %s | built %s',
+    'background:#1a6cf5;color:#fff;font-weight:bold;padding:1px 2px',
+    'color:#fff',
+    rand,
+    buildDate,
+  );
   const DeviceSettingsRoute = '/device-settings/:deviceMac';
   routerHook.addRoute(DeviceSettingsRoute, DeviceSettingsPage);
 

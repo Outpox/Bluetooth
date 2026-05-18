@@ -1,9 +1,9 @@
 import deckyPlugin from '@decky/rollup';
 import sass from 'rollup-plugin-sass';
 
-const buildTime = new Date().toISOString();
+const buildEpoch = Math.floor(Date.now() / 1000);
 const buildRand = Math.random().toString(36).slice(2, 7);
-const buildId = `${buildTime}-${buildRand}`;
+const buildId = `${buildEpoch}-${buildRand}`;
 
 function injectBuildId() {
   return {
@@ -14,6 +14,7 @@ function injectBuildId() {
   };
 }
 
+
 export default deckyPlugin({
-  plugins: [injectBuildId(), sass()],
+  plugins: [injectBuildId(), sass({ api: 'modern' })],
 });

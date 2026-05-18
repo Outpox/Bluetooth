@@ -4,7 +4,6 @@
   display: flex;
   padding: 0;
   position: relative;
-
   &::after {
     content: '';
     position: absolute;
@@ -14,14 +13,14 @@
     background: rgba(255, 255, 255, 0.1);
   }
 
-  .gpfocus {
-    background-color: rgba(255, 255, 255, 0.15);
-  }
-
   .connect-container {
     display: flex;
-    width: 95%;
+    flex: 1;
     padding: 10px 0;
+
+    &.gpfocus {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
 
     .device-icon {
       display: flex;
@@ -56,12 +55,23 @@
 
   .options-container {
     display: flex;
-    width: 5%;
+    flex-shrink: 0;
     justify-content: center;
+    align-items: center;
     color: $color_light_gray;
+
+    &.gpfocus {
+      background-color: transparent;
+
+      .options-btn {
+        background-color: rgba(255, 255, 255, 0.15);
+      }
+    }
 
     .options-btn {
       display: flex;
+      padding: 6px;
+      border-radius: 50%;
 
       svg {
         width: 12px;

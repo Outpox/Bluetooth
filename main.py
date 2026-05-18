@@ -10,6 +10,7 @@ BLUEZ_SERVICE = 'org.bluez'
 OBJECT_MANAGER_IFACE = 'org.freedesktop.DBus.ObjectManager'
 ADAPTER_IFACE = 'org.bluez.Adapter1'
 DEVICE_IFACE = 'org.bluez.Device1'
+BATTERY_IFACE = 'org.bluez.Battery1'
 
 # TODO: replace with dynamic adapter discovery via GetManagedObjects()
 ADAPTER_PATH = '/org/bluez/hci0'
@@ -65,11 +66,15 @@ class Plugin:
             props = interfaces[DEVICE_IFACE]
             if not _prop(props, 'Paired', False):
                 continue
+            battery = None
+            if BATTERY_IFACE in interfaces:
+                battery = _prop(interfaces[BATTERY_IFACE], 'Percentage', None)
             devices.append({
                 'mac': _prop(props, 'Address', ''),
                 'name': _prop(props, 'Name', 'Unnamed device'),
                 'connected': _prop(props, 'Connected', False),
                 'icon': _prop(props, 'Icon', ''),
+                'battery': battery,
             })
         _log('<< get_paired_devices_with_info →', devices)
         return devices
@@ -83,12 +88,32 @@ class Plugin:
                 _log('>> D-Bus message:', msg.header, msg.body)
                 reply = await router.send_and_get_reply(msg)
                 _log('<< D-Bus reply:', reply.header, reply.body)
+
+                battery = None
+                try:
+                    batt_msg = Properties(_device_addr(device, interface=BATTERY_IFACE)).get('Percentage')
+                    batt_reply = await router.send_and_get_reply(batt_msg)
+                    battery = batt_reply.body[0][1]
+                except Exception:
+                    pass
+
             props = dict(reply.body[0])
             result = {
-                'mac': _prop(props, 'Address', device),
-                'name': _prop(props, 'Alias', None) or _prop(props, 'Name', 'Unnamed device'),
-                'connected': _prop(props, 'Connected', False),
-                'icon': _prop(props, 'Icon', ''),
+                'mac':           _prop(props, 'Address', device),
+                'name':          _prop(props, 'Alias', None) or _prop(props, 'Name', 'Unnamed device'),
+                'connected':     _prop(props, 'Connected', False),
+                'icon':          _prop(props, 'Icon', ''),
+                'original_name': _prop(props, 'Name', None),
+                'paired':        _prop(props, 'Paired', False),
+                'trusted':       _prop(props, 'Trusted', False),
+                'blocked':       _prop(props, 'Blocked', False),
+                'address_type':  _prop(props, 'AddressType', None),
+                'uuids':         list(_prop(props, 'UUIDs', [])),
+                'rssi':          _prop(props, 'RSSI', None),
+                'tx_power':      _prop(props, 'TxPower', None),
+                'device_class':  _prop(props, 'Class', None),
+                'appearance':    _prop(props, 'Appearance', None),
+                'battery':       battery,
             }
             _log(f'<< get_device_info → {result}')
             return result

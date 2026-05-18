@@ -10,6 +10,7 @@ export interface Device {
   name: string;
   connected: boolean;
   icon: string;
+  battery?: number | null;
   [key: string]: unknown;
 }
 
@@ -62,6 +63,7 @@ export function Device({
                 ) : (
                   <span className="uppercase">{i18n('Settings_Bluetooth_NotConnected')}</span>
                 )}
+                {device.battery != null && <span> · {device.battery}%</span>}
               </div>
             </div>
           </Focusable>
