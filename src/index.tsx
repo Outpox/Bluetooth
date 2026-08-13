@@ -1,5 +1,4 @@
 import { definePlugin, PanelSection, PanelSectionRow, staticClasses, ToggleField, Field } from '@decky/ui';
-import { routerHook } from '@decky/api';
 import { useEffect, useReducer, useState } from 'react';
 import equal from 'fast-deep-equal';
 import { Device } from './components/device';
@@ -7,7 +6,6 @@ import { Spinner } from './components/spinner';
 import { getBluetoothStatus, getPairedDevicesWithInfo, toggleBluetooth } from './server';
 import { i18n } from './utils';
 import { BluetoothIcon } from './components/icons';
-import { DeviceSettingsPage } from './pages/deviceSettings';
 import css from './index.scss';
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -80,15 +78,10 @@ export default definePlugin(() => {
     rand,
     buildDate,
   );
-  const DeviceSettingsRoute = '/device-settings/:deviceMac';
-  routerHook.addRoute(DeviceSettingsRoute, DeviceSettingsPage);
 
   return {
     title: <div className={staticClasses.Title}>Bluetooth</div>,
     content: <Content />,
     icon: <BluetoothIcon style={{ width: '1em' }} />,
-    onDismount() {
-      routerHook.removeRoute(DeviceSettingsRoute);
-    },
   };
 });

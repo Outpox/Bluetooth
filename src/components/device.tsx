@@ -1,8 +1,8 @@
-import { Focusable, PanelSectionRow, Router } from '@decky/ui';
+import { Focusable, PanelSectionRow } from '@decky/ui';
 import { ReactElement } from 'react';
 import { toggleDeviceConnection } from '../server';
 import { i18n } from '../utils';
-import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon, SettingsIcon } from './deckIcons';
+import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon } from './deckIcons';
 import { PiMouseBold } from 'react-icons/pi';
 
 export interface Device {
@@ -45,10 +45,6 @@ export function Device({
     void toggleDeviceConnection(device).then(refresh);
   };
 
-  const settings = () => {
-    Router.Navigate('/device-settings/' + device.mac);
-  };
-
   return (
     <>
       <PanelSectionRow>
@@ -65,11 +61,6 @@ export function Device({
                 )}
                 {device.battery != null && <span> · {device.battery}%</span>}
               </div>
-            </div>
-          </Focusable>
-          <Focusable onActivate={settings} className="options-container" noFocusRing={false}>
-            <div className="options-btn">
-              <SettingsIcon />
             </div>
           </Focusable>
         </Focusable>

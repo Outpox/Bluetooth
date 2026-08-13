@@ -1,7 +1,7 @@
 ![](./assets/preview.png)
 
 # Bluetooth plugin  
-Formerly known as `SDH-Bluetooth`, this plugin allows you to quickly connect to already paired bluetooth devices.  
+This plugin allows you to quickly connect to already paired bluetooth devices.  
   
 This saves one (yes ONE 1!) click instead of going trough the settings menu, but this should be faster when you're already in-game.  
 If you can't see your device make sure you paired it once via the settings menu first, then it should appear.  

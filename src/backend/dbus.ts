@@ -1,13 +1,7 @@
 import { callable } from '@decky/api';
 import { Device } from '../components/device';
 import { retryWithTO } from '../utils';
-import {
-  BluetoothStatusError,
-  DeviceConnectionError,
-  DeviceInfoError,
-  PairedDevicesError,
-  TimeoutError
-} from './errors';
+import { BluetoothStatusError, DeviceInfoError, PairedDevicesError, TimeoutError } from './errors';
 import { logger } from './logger';
 
 const _getBluetoothStatus = callable<[], boolean>('get_bluetooth_status');
@@ -36,7 +30,7 @@ export class BluetoothController {
           throw new BluetoothStatusError('Timed out retrieving bluetooth status');
         }
         throw error;
-      })
+      }),
     );
   }
 
@@ -47,7 +41,7 @@ export class BluetoothController {
           throw new PairedDevicesError('Timed out retrieving paired devices');
         }
         throw error;
-      })
+      }),
     );
   }
 
@@ -58,7 +52,7 @@ export class BluetoothController {
           throw new DeviceInfoError('Timed out retrieving device info');
         }
         throw error;
-      })
+      }),
     );
   }
 
@@ -69,18 +63,11 @@ export class BluetoothController {
           throw new BluetoothStatusError('Timed out setting bluetooth status');
         }
         throw error;
-      })
+      }),
     );
   }
 
   toggleDeviceConnection(mac: string, connected: boolean): Promise<void> {
-    return call('toggle_device_connection', [mac, connected], () =>
-      retryWithTO(() => _toggleDeviceConnection(mac, connected)).catch(error => {
-        if (error instanceof TimeoutError) {
-          throw new DeviceConnectionError('Timed out setting device connection');
-        }
-        throw error;
-      })
-    );
+    return call('toggle_device_connection', [mac, connected], () => _toggleDeviceConnection(mac, connected));
   }
 }
