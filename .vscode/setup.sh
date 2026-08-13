@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 PNPM_INSTALLED="$(which pnpm)"
-DOCKER_INSTALLED="$(which docker)"
+ENGINE_INSTALLED="$(which podman || which docker)"
 CLI_INSTALLED="$(pwd)/cli/decky"
 
 # echo "$PNPM_INSTALLED"
-# echo "$DOCKER_INSTALLED"
+# echo "$ENGINE_INSTALLED"
 # echo "$CLI_INSTALLED"
 
 echo "If you are using alpine linux, do not expect any support."
@@ -30,8 +30,8 @@ if [[ "$PNPM_INSTALLED" =~ "which" ]]; then
     fi
 fi
 
-if [[ "$DOCKER_INSTALLED" =~ "which" ]]; then
-    echo "Docker is not currently installed, in order build plugins with a backend you will need to have Docker installed. Please install Docker via the preferred method for your distribution."
+if [[ -z "$ENGINE_INSTALLED" ]]; then
+    echo "No container engine found. Building plugins requires podman (default) or docker. Please install one via the preferred method for your distribution."
 fi
 
 if test -f "$(pwd)/requirements.txt"; then
