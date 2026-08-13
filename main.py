@@ -15,7 +15,7 @@ BATTERY_IFACE = 'org.bluez.Battery1'
 # TODO: replace with dynamic adapter discovery via GetManagedObjects()
 ADAPTER_PATH = '/org/bluez/hci0'
 
-DEBUG = True  # set to True to enable verbose D-Bus logging
+DEBUG = False  # set to True to enable verbose D-Bus logging
 
 
 def _log(*args: object) -> None:

@@ -1,4 +1,4 @@
-const DEBUG = true; // set to true to enable verbose D-Bus logging
+const DEBUG = false; // set to true to enable verbose D-Bus logging
 
 export const logger = {
   debug: (...args: unknown[]): void => {
