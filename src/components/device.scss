@@ -16,6 +16,10 @@
   .connect-container {
     display: flex;
     flex: 1;
+    // Without this a flex item cannot shrink below its min-content width, so a
+    // long unbreakable device name widens the row and the focus scroll drags
+    // the whole list sideways.
+    min-width: 0;
     padding: 10px 0;
 
     &.gpfocus {
@@ -25,6 +29,7 @@
     .device-icon {
       display: flex;
       width: 15%;
+      flex-shrink: 0;
 
       svg {
         width: 24px;
@@ -34,6 +39,8 @@
     .device-info {
       display: flex;
       flex-direction: column;
+      min-width: 0;
+      flex: 1;
 
       &.connected {
         color: $color_light_gray;
@@ -43,12 +50,19 @@
         color: $color_dark_gray;
       }
 
+      // `anywhere` also drops the min-content width to a single character, so
+      // an unbreakable name can no longer force the row wider than the panel.
+      // `break-word` is the fallback for older CEF builds.
       .device-name {
         width: 100%;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .device-status {
         width: 100%;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
     }
   }
