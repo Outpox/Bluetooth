@@ -1,4 +1,4 @@
-import { customizeDecorator } from 'ts-retry-promise';
+import { retryDecorator } from 'ts-retry-promise';
 import { TimeoutError } from './backend/errors';
 
 declare const LocalizationManager: {
@@ -11,14 +11,17 @@ export function i18n(key: string, fallback?: string) {
   return val ?? fallback ?? key;
 }
 
-export const retryWithTO = <T>(fn: () => Promise<T>): Promise<T> => {
-  const timeout = customizeDecorator({ timeout: 2000 });
-  const retry = customizeDecorator({ retries: 2 });
+interface RetryOptions {
+  /** Overall budget for every attempt, in milliseconds. */
+  timeout?: number;
+  /** Extra attempts after the first one. 0 means a single attempt. */
+  retries?: number;
+}
 
-  return retry(timeout(fn))().catch(error => {
+export const retryWithTO = <T>(fn: () => Promise<T>, { timeout = 2000, retries = 2 }: RetryOptions = {}): Promise<T> =>
+  retryDecorator(fn, { timeout, retries })().catch(error => {
     if (error.message.includes('Timeout')) {
       throw new TimeoutError('Timeout');
     }
     throw error;
   });
-};

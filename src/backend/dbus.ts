@@ -1,7 +1,13 @@
 import { callable } from '@decky/api';
 import { Device } from '../components/device';
 import { retryWithTO } from '../utils';
-import { BluetoothStatusError, DeviceInfoError, PairedDevicesError, TimeoutError } from './errors';
+import {
+  BluetoothStatusError,
+  DeviceConnectionError,
+  DeviceInfoError,
+  PairedDevicesError,
+  TimeoutError,
+} from './errors';
 import { logger } from './logger';
 
 const _getBluetoothStatus = callable<[], boolean>('get_bluetooth_status');
@@ -68,6 +74,16 @@ export class BluetoothController {
   }
 
   toggleDeviceConnection(mac: string, connected: boolean): Promise<boolean> {
-    return call('toggle_device_connection', [mac, connected], () => _toggleDeviceConnection(mac, connected));
+    return call('toggle_device_connection', [mac, connected], () =>
+      // BlueZ blocks for several seconds on a sleeping device, so this call needs
+      // a much longer budget than the read calls. It also gets no retry: a second
+      // Connect while the first one runs fights it instead of helping.
+      retryWithTO(() => _toggleDeviceConnection(mac, connected), { timeout: 20000, retries: 0 }).catch(error => {
+        if (error instanceof TimeoutError) {
+          throw new DeviceConnectionError('Timed out toggling the device connection');
+        }
+        throw error;
+      }),
+    );
   }
 }
