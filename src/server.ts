@@ -26,9 +26,9 @@ export async function getPairedDeviceWithInfo(mac: string): Promise<Device | Dev
 }
 
 export async function toggleBluetooth(status: boolean): Promise<void> {
-  controller.toggleBluetooth(status).catch(console.error);
+  return controller.toggleBluetooth(status).catch(console.error);
 }
 
 export async function toggleDeviceConnection(device: Device): Promise<void> {
-  controller.toggleDeviceConnection(device.mac, device.connected).catch(console.error);
+  return controller.toggleDeviceConnection(device.mac, device.connected).catch(console.error);
 }
