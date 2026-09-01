@@ -140,6 +140,7 @@ class Plugin:
 
         jeepney's receiver calls drop_all() on its way out, so this aborts every
         reply another call is waiting for. Reserve it for a broken transport.
+        Only safe while the loop is healthy: on unload use _abandon_router.
         """
         global _adapter_path
         async with self._router_lock:
@@ -161,6 +162,26 @@ class Plugin:
                         await conn.close()
                     except Exception as e:
                         _log('closing the D-Bus connection failed:', e)
+
+    def _abandon_router(self) -> None:
+        """Drop the shared router without awaiting anything.
+
+        _unload runs inside Decky's shutdown, where awaiting jeepney's teardown
+        never returns: the cancelled receiver task is never scheduled again, and
+        Decky SIGKILLs a plugin that takes over 5 s to stop. The process exits
+        straight after, so the kernel reclaims the socket either way.
+        """
+        global _adapter_path
+        _adapter_path = None
+        ctx, self._router_ctx, self._router = self._router_ctx, None, None
+        if ctx is None:
+            return
+        task = getattr(getattr(ctx, 'req_ctx', None), '_rcv_task', None)
+        if task is not None:
+            task.cancel()
+        writer = getattr(getattr(ctx, 'conn', None), 'writer', None)
+        if writer is not None:
+            writer.close()
 
     async def _send(self, msg):
         router = await self._get_router()
@@ -300,7 +321,7 @@ class Plugin:
         decky.logger.info('Bluetooth plugin loaded')
 
     async def _unload(self):
-        await self._close_router()
+        self._abandon_router()
         decky.logger.info('Bluetooth plugin unloaded')
 
     async def _uninstall(self):
