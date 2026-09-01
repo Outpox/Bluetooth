@@ -13,10 +13,11 @@ ADAPTER_IFACE = 'org.bluez.Adapter1'
 DEVICE_IFACE = 'org.bluez.Device1'
 BATTERY_IFACE = 'org.bluez.Battery1'
 
-# TODO: replace with dynamic adapter discovery via GetManagedObjects()
-ADAPTER_PATH = '/org/bluez/hci0'
-
 POWER_SUPPLY_PATH = '/sys/class/power_supply'
+
+# Set on the first successful discovery. BlueZ keeps the same path for the life
+# of the adapter, so one lookup covers the session.
+_adapter_path = None
 
 DEBUG = False  # set to True to enable verbose D-Bus logging
 
@@ -26,13 +27,56 @@ def _log(*args: object) -> None:
         decky.logger.debug(' '.join(str(a) for a in args))
 
 
-def _adapter_addr(interface: str = ADAPTER_IFACE) -> DBusAddress:
-    return DBusAddress(ADAPTER_PATH, bus_name=BLUEZ_SERVICE, interface=interface)
-
-
-def _device_addr(mac: str, interface: str = DEVICE_IFACE) -> DBusAddress:
-    path = ADAPTER_PATH + '/dev_' + mac.replace(':', '_')
+def _addr(path: str, interface: str) -> DBusAddress:
     return DBusAddress(path, bus_name=BLUEZ_SERVICE, interface=interface)
+
+
+def _forget_adapter() -> None:
+    """Drop the cached adapter path so the next call rediscovers it."""
+    global _adapter_path
+    _adapter_path = None
+
+
+async def _managed_objects(router):
+    om_addr = _addr('/', OBJECT_MANAGER_IFACE)
+    msg = new_method_call(om_addr, 'GetManagedObjects')
+    _log('>> GetManagedObjects')
+    reply = await router.send_and_get_reply(msg)
+    return unwrap_msg(reply)[0]
+
+
+async def _adapter_path_of(router) -> str:
+    """Find the object path of the first BlueZ adapter.
+
+    The path is not always /org/bluez/hci0. A machine with a second radio, or one
+    where the internal radio enumerates late, gets hci1 or higher, and every
+    adapter call then fails against a hardcoded path.
+    """
+    global _adapter_path
+    if _adapter_path:
+        return _adapter_path
+    for path, interfaces in sorted((await _managed_objects(router)).items()):
+        if ADAPTER_IFACE in interfaces:
+            _adapter_path = path
+            _log('adapter path →', path)
+            return path
+    raise RuntimeError('no BlueZ adapter found')
+
+
+async def _device_path_of(router, mac: str) -> str:
+    """Find the object path BlueZ uses for a MAC.
+
+    BlueZ scopes device objects under their adapter (/org/bluez/hciN/dev_...), so
+    a path built from a fixed adapter breaks connect and disconnect too, not only
+    the adapter calls. Match on the reported Address instead of building a path.
+    """
+    for path, interfaces in (await _managed_objects(router)).items():
+        if DEVICE_IFACE not in interfaces:
+            continue
+        if str(_prop(interfaces[DEVICE_IFACE], 'Address', '')).upper() == mac.upper():
+            _log('device path →', path)
+            return path
+    raise RuntimeError(f'no BlueZ device object for {mac}')
 
 
 def _prop(props: dict, key: str, default):  # type: ignore[type-arg]
@@ -76,7 +120,7 @@ class Plugin:
         _log('>> get_bluetooth_status()')
         try:
             async with open_dbus_router(bus='SYSTEM') as router:
-                msg = Properties(_adapter_addr()).get('Powered')
+                msg = Properties(_addr(await _adapter_path_of(router), ADAPTER_IFACE)).get('Powered')
                 _log('>> D-Bus message:', msg.header, msg.body)
                 reply = await router.send_and_get_reply(msg)
                 _log('<< D-Bus reply:', reply.header, reply.body)
@@ -84,20 +128,15 @@ class Plugin:
             _log('<< get_bluetooth_status →', result)
             return result
         except Exception as e:
+            _forget_adapter()
             decky.logger.error(f'get_bluetooth_status failed: {e}')
             return False
 
     async def get_paired_devices_with_info(self):
         _log('>> get_paired_devices_with_info()')
         try:
-            om_addr = DBusAddress('/', bus_name=BLUEZ_SERVICE, interface=OBJECT_MANAGER_IFACE)
-            msg = new_method_call(om_addr, 'GetManagedObjects')
             async with open_dbus_router(bus='SYSTEM') as router:
-                _log('>> D-Bus message:', msg.header, msg.body)
-                reply = await router.send_and_get_reply(msg)
-                _log('<< D-Bus reply type:', reply.header.message_type)
-
-            objects = unwrap_msg(reply)[0]
+                objects = await _managed_objects(router)
         except Exception as e:
             decky.logger.error(f'get_paired_devices_with_info failed: {e}')
             return []
@@ -128,16 +167,16 @@ class Plugin:
     async def get_device_info(self, device: str):
         _log(f'>> get_device_info({device!r})')
         try:
-            addr = _device_addr(device)
             async with open_dbus_router(bus='SYSTEM') as router:
-                msg = Properties(addr).get_all()
+                path = await _device_path_of(router, device)
+                msg = Properties(_addr(path, DEVICE_IFACE)).get_all()
                 _log('>> D-Bus message:', msg.header, msg.body)
                 reply = await router.send_and_get_reply(msg)
                 _log('<< D-Bus reply:', reply.header, reply.body)
 
                 battery = None
                 try:
-                    batt_msg = Properties(_device_addr(device, interface=BATTERY_IFACE)).get('Percentage')
+                    batt_msg = Properties(_addr(path, BATTERY_IFACE)).get('Percentage')
                     batt_reply = await router.send_and_get_reply(batt_msg)
                     battery = unwrap_msg(batt_reply)[0][1]
                 except Exception:
@@ -179,9 +218,8 @@ class Plugin:
         method = 'Disconnect' if connected else 'Connect'
         _log(f'>> toggle_device_connection({device!r}, connected={connected}) → calling {method}')
         try:
-            addr = _device_addr(device)
-            msg = new_method_call(addr, method)
             async with open_dbus_router(bus='SYSTEM') as router:
+                msg = new_method_call(_addr(await _device_path_of(router, device), DEVICE_IFACE), method)
                 _log('>> D-Bus message:', msg.header, msg.body)
                 reply = await router.send_and_get_reply(msg)
                 _log('<< D-Bus reply:', reply.header, reply.body)
@@ -195,8 +233,9 @@ class Plugin:
     async def toggle_bluetooth(self, state: bool):
         _log(f'>> toggle_bluetooth(state={state})')
         try:
-            msg = Properties(_adapter_addr()).set('Powered', 'b', state)
             async with open_dbus_router(bus='SYSTEM') as router:
+                adapter = _addr(await _adapter_path_of(router), ADAPTER_IFACE)
+                msg = Properties(adapter).set('Powered', 'b', state)
                 _log('>> D-Bus message:', msg.header, msg.body)
                 reply = await router.send_and_get_reply(msg)
                 _log('<< D-Bus reply:', reply.header, reply.body)
@@ -204,6 +243,7 @@ class Plugin:
             _log('<< toggle_bluetooth → ok')
             return True
         except Exception as e:
+            _forget_adapter()
             decky.logger.error(f'toggle_bluetooth failed: {e}')
             return False
 
