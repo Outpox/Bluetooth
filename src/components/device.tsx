@@ -1,5 +1,5 @@
 import { Focusable, PanelSectionRow } from '@decky/ui';
-import { ReactElement, useEffect, useState } from 'react';
+import { ReactElement, useState } from 'react';
 import { toggleDeviceConnection } from '../server';
 import { i18n } from '../utils';
 import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon } from './deckIcons';
@@ -16,19 +16,18 @@ export interface Device {
 
 export function Device({
   device,
+  failed,
   refresh,
   setLoading,
+  onResult,
 }: {
   device: Device;
-  refresh: () => void;
+  failed: boolean;
+  refresh: () => Promise<void>;
   setLoading: (state: boolean) => void;
+  onResult: (mac: string, ok: boolean) => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    setFailed(false);
-  }, [device.connected]);
 
   const getIcon = (): ReactElement => {
     switch (device.icon) {
@@ -53,13 +52,10 @@ export function Device({
       return;
     }
     setBusy(true);
-    setFailed(false);
     setLoading(true);
     void toggleDeviceConnection(device)
-      .then(ok => {
-        setFailed(!ok);
-        refresh();
-      })
+      // The refresh clears every stored failure, so report this one after it.
+      .then(ok => refresh().then(() => onResult(device.mac, ok)))
       .finally(() => setBusy(false));
   };
 

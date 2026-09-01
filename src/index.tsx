@@ -19,6 +19,8 @@ function Content() {
     }
     return newValue;
   }, null);
+  // Held here rather than in the rows, so a refresh can clear them all.
+  const [failedMacs, setFailedMacs] = useState<string[]>([]);
 
   const handleToggleBluetooth = () => {
     void toggleBluetooth(status).finally(() => {
@@ -28,10 +30,15 @@ function Content() {
 
   const refreshStatus = async (delay = 0) => {
     setLoading(true);
+    setFailedMacs([]);
     await sleep(delay);
     setStatus(await getBluetoothStatus());
     setDevices(await getPairedDevicesWithInfo());
     setLoading(false);
+  };
+
+  const handleDeviceResult = (mac: string, ok: boolean) => {
+    setFailedMacs(previous => (ok ? previous.filter(m => m !== mac) : [...previous.filter(m => m !== mac), mac]));
   };
 
   useEffect(() => {
@@ -69,8 +76,10 @@ function Content() {
           <Device
             key={device.mac}
             device={device}
+            failed={failedMacs.includes(device.mac)}
             refresh={() => refreshStatus(0)}
             setLoading={(state: boolean) => setLoading(state)}
+            onResult={handleDeviceResult}
           />
         ))}
       </PanelSection>
