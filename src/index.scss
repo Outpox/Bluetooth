@@ -28,4 +28,9 @@
     padding: 10px 0;
     color: utils.$color_dark_gray;
   }
+
+  .refresh-icon.spinning {
+    animation: bt-spin 0.8s linear infinite;
+    transform-origin: center;
+  }
 }

@@ -5,3 +5,9 @@ $color_failed: #f4685e;
 .uppercase {
   text-transform: uppercase;
 }
+
+@keyframes bt-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
