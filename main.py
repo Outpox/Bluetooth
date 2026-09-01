@@ -16,6 +16,8 @@ BATTERY_IFACE = 'org.bluez.Battery1'
 # TODO: replace with dynamic adapter discovery via GetManagedObjects()
 ADAPTER_PATH = '/org/bluez/hci0'
 
+POWER_SUPPLY_PATH = '/sys/class/power_supply'
+
 DEBUG = False  # set to True to enable verbose D-Bus logging
 
 
@@ -36,6 +38,37 @@ def _device_addr(mac: str, interface: str = DEVICE_IFACE) -> DBusAddress:
 def _prop(props: dict, key: str, default):  # type: ignore[type-arg]
     """Extract value from a jeepney property dict entry — values are (signature, value) tuples."""
     return props[key][1] if key in props else default
+
+
+def _sysfs_battery(mac: str):
+    """Read the battery level the kernel publishes for a device, or None.
+
+    BlueZ only exposes org.bluez.Battery1 for devices that report their battery
+    over GATT. A DualShock or DualSense is HID over BR/EDR and reports through its
+    kernel driver instead, which shows up as
+    /sys/class/power_supply/ps-controller-battery-<mac>/capacity. Generic HID
+    devices use hid-<mac>-battery, so the match is on the MAC, not on a prefix.
+    This reads without root, so it fits the permissions the plugin already has.
+    """
+    if not mac:
+        return None
+    needle = mac.lower()
+    try:
+        entries = os.listdir(POWER_SUPPLY_PATH)
+    except OSError as e:
+        _log('sysfs battery: cannot list', POWER_SUPPLY_PATH, e)
+        return None
+    for entry in entries:
+        if needle not in entry.lower():
+            continue
+        try:
+            with open(os.path.join(POWER_SUPPLY_PATH, entry, 'capacity')) as f:
+                level = int(f.read().strip())
+            _log('sysfs battery:', entry, '→', level)
+            return level
+        except (OSError, ValueError) as e:
+            _log('sysfs battery: cannot read', entry, e)
+    return None
 
 
 class Plugin:
@@ -76,11 +109,14 @@ class Plugin:
             props = interfaces[DEVICE_IFACE]
             if not _prop(props, 'Paired', False):
                 continue
+            mac = _prop(props, 'Address', '')
             battery = None
             if BATTERY_IFACE in interfaces:
                 battery = _prop(interfaces[BATTERY_IFACE], 'Percentage', None)
+            if battery is None:
+                battery = _sysfs_battery(mac)
             devices.append({
-                'mac': _prop(props, 'Address', ''),
+                'mac': mac,
                 'name': _prop(props, 'Name', 'Unnamed device'),
                 'connected': _prop(props, 'Connected', False),
                 'icon': _prop(props, 'Icon', ''),
@@ -108,6 +144,8 @@ class Plugin:
                     pass
 
             props = dict(unwrap_msg(reply)[0])
+            if battery is None:
+                battery = _sysfs_battery(_prop(props, 'Address', device))
             result = {
                 'mac':           _prop(props, 'Address', device),
                 'name':          _prop(props, 'Alias', None) or _prop(props, 'Name', 'Unnamed device'),
