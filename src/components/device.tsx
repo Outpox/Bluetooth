@@ -59,7 +59,16 @@ export function Device({
     <>
       <PanelSectionRow>
         <Focusable noFocusRing={true} className="custom-container" flow-children="row">
-          <Focusable onActivate={connect} className="connect-container" noFocusRing={false}>
+          <Focusable
+            onActivate={connect}
+            onOKActionDescription={
+              device.connected
+                ? i18n('Settings_Bluetooth_Disconnect', 'Disconnect')
+                : i18n('Settings_Bluetooth_Connect', 'Connect')
+            }
+            className="connect-container"
+            noFocusRing={false}
+          >
             <div className="device-icon">{getIcon()}</div>
             <div className={`device-info ${device.connected ? 'connected' : 'disconnected'}`}>
               <div className="device-name">{device.name}</div>
