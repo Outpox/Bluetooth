@@ -53,6 +53,11 @@ function Content() {
         </PanelSectionRow>
       </PanelSection>
       <PanelSection>
+        {devices.length === 0 && !loading && (
+          <PanelSectionRow>
+            <div className="no-devices">{i18n('Settings_Bluetooth_NoDevicesFound', 'No paired devices')}</div>
+          </PanelSectionRow>
+        )}
         {devices.map(device => (
           <Device
             key={device.mac}
