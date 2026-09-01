@@ -12,13 +12,13 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 function Content() {
   const [status, setStatus] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [devices, setDevices] = useReducer((previousValue: Device[], newValue: Device[]) => {
+  const [loading, setLoading] = useState<boolean>(true);
+  const [devices, setDevices] = useReducer((previousValue: Device[] | null, newValue: Device[] | null) => {
     if (equal(newValue, previousValue)) {
       return previousValue;
     }
     return newValue;
-  }, []);
+  }, null);
 
   const handleToggleBluetooth = () => {
     void toggleBluetooth(status).finally(() => {
@@ -53,12 +53,17 @@ function Content() {
         </PanelSectionRow>
       </PanelSection>
       <PanelSection>
-        {devices.length === 0 && !loading && (
+        {!loading && devices === null && (
+          <PanelSectionRow>
+            <div className="no-devices">{i18n('Settings_Bluetooth_Unavailable', 'Bluetooth is unavailable')}</div>
+          </PanelSectionRow>
+        )}
+        {!loading && devices?.length === 0 && (
           <PanelSectionRow>
             <div className="no-devices">{i18n('Settings_Bluetooth_NoDevicesFound', 'No paired devices')}</div>
           </PanelSectionRow>
         )}
-        {devices.map(device => (
+        {devices?.map(device => (
           <Device
             key={device.mac}
             device={device}

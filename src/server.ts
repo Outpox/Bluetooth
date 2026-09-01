@@ -11,10 +11,11 @@ export async function getBluetoothStatus(): Promise<boolean> {
   });
 }
 
-export async function getPairedDevicesWithInfo(): Promise<Device[]> {
+/** Resolves to null when the backend could not be reached, [] when nothing is paired. */
+export async function getPairedDevicesWithInfo(): Promise<Device[] | null> {
   return controller.getPairedDevicesWithInfo().catch(error => {
     console.error(error);
-    return [];
+    return null;
   });
 }
 

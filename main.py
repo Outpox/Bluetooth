@@ -1,12 +1,13 @@
 import asyncio
 import os
 import sys
+from typing import Any
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'py_modules'))
 
 import decky
 from jeepney import DBusAddress, Properties, new_method_call
 from jeepney.io.asyncio import open_dbus_router
-from jeepney.wrappers import unwrap_msg
+from jeepney.wrappers import DBusErrorResponse, unwrap_msg
 
 BLUEZ_SERVICE = 'org.bluez'
 OBJECT_MANAGER_IFACE = 'org.freedesktop.DBus.ObjectManager'
@@ -16,11 +17,13 @@ BATTERY_IFACE = 'org.bluez.Battery1'
 
 POWER_SUPPLY_PATH = '/sys/class/power_supply'
 
-# Set on the first successful discovery. BlueZ keeps the same path for the life
-# of the adapter, so one lookup covers the session.
 _adapter_path = None
 
 DEBUG = False  # set to True to enable verbose D-Bus logging
+
+
+class BluezObjectNotFound(Exception):
+    """BlueZ answered, but it has no object for what we asked about."""
 
 
 def _log(*args: object) -> None:
@@ -32,12 +35,6 @@ def _addr(path: str, interface: str) -> DBusAddress:
     return DBusAddress(path, bus_name=BLUEZ_SERVICE, interface=interface)
 
 
-def _forget_adapter() -> None:
-    """Drop the cached adapter path so the next call rediscovers it."""
-    global _adapter_path
-    _adapter_path = None
-
-
 async def _managed_objects(router):
     om_addr = _addr('/', OBJECT_MANAGER_IFACE)
     msg = new_method_call(om_addr, 'GetManagedObjects')
@@ -47,29 +44,36 @@ async def _managed_objects(router):
 
 
 async def _adapter_path_of(router) -> str:
-    """Find the object path of the first BlueZ adapter.
+    """Find the object path of the adapter the paired devices sit under.
 
-    The path is not always /org/bluez/hci0. A machine with a second radio, or one
-    where the internal radio enumerates late, gets hci1 or higher, and every
-    adapter call then fails against a hardcoded path.
+    A dock or a USB dongle can own hci0 while the radio holding the user's
+    devices sits at hci1, so the lowest path is only the fallback.
     """
     global _adapter_path
     if _adapter_path:
         return _adapter_path
-    for path, interfaces in sorted((await _managed_objects(router)).items()):
-        if ADAPTER_IFACE in interfaces:
-            _adapter_path = path
-            _log('adapter path →', path)
-            return path
-    raise RuntimeError('no BlueZ adapter found')
+    objects = await _managed_objects(router)
+    adapters = sorted(path for path, ifaces in objects.items() if ADAPTER_IFACE in ifaces)
+    if not adapters:
+        raise BluezObjectNotFound('no BlueZ adapter found')
+    for path, ifaces in objects.items():
+        if DEVICE_IFACE not in ifaces or not _prop(ifaces[DEVICE_IFACE], 'Paired', False):
+            continue
+        owner = path.rsplit('/', 1)[0]
+        if owner in adapters:
+            _adapter_path = owner
+            _log('adapter path →', owner, '(owns a paired device)')
+            return owner
+    _adapter_path = adapters[0]
+    _log('adapter path →', _adapter_path, '(no paired device, lowest path)')
+    return _adapter_path
 
 
 async def _device_path_of(router, mac: str) -> str:
     """Find the object path BlueZ uses for a MAC.
 
-    BlueZ scopes device objects under their adapter (/org/bluez/hciN/dev_...), so
-    a path built from a fixed adapter breaks connect and disconnect too, not only
-    the adapter calls. Match on the reported Address instead of building a path.
+    Device objects are scoped under their adapter, so match on the reported
+    Address rather than building /org/bluez/hciN/dev_... from a fixed adapter.
     """
     for path, interfaces in (await _managed_objects(router)).items():
         if DEVICE_IFACE not in interfaces:
@@ -77,7 +81,7 @@ async def _device_path_of(router, mac: str) -> str:
         if str(_prop(interfaces[DEVICE_IFACE], 'Address', '')).upper() == mac.upper():
             _log('device path →', path)
             return path
-    raise RuntimeError(f'no BlueZ device object for {mac}')
+    raise BluezObjectNotFound(f'no BlueZ device object for {mac}')
 
 
 def _prop(props: dict, key: str, default):  # type: ignore[type-arg]
@@ -88,12 +92,9 @@ def _prop(props: dict, key: str, default):  # type: ignore[type-arg]
 def _sysfs_battery(mac: str):
     """Read the battery level the kernel publishes for a device, or None.
 
-    BlueZ only exposes org.bluez.Battery1 for devices that report their battery
-    over GATT. A DualShock or DualSense is HID over BR/EDR and reports through its
-    kernel driver instead, which shows up as
-    /sys/class/power_supply/ps-controller-battery-<mac>/capacity. Generic HID
-    devices use hid-<mac>-battery, so the match is on the MAC, not on a prefix.
-    This reads without root, so it fits the permissions the plugin already has.
+    BlueZ exposes org.bluez.Battery1 only for GATT devices. A DualSense reports
+    through its kernel driver as ps-controller-battery-<mac>, and generic HID
+    devices as hid-<mac>-battery, so the match is on the MAC, not on a prefix.
     """
     if not mac:
         return None
@@ -117,21 +118,16 @@ def _sysfs_battery(mac: str):
 
 
 class Plugin:
-    # One connection for the plugin's lifetime, opened on first use.
-    _router = None
-    _router_ctx = None
-    _router_lock = None
+    _router: Any = None
+    _router_ctx: Any = None
+    _router_lock: asyncio.Lock
 
     async def _get_router(self):
         """Return the shared D-Bus router, opening it on first use.
 
-        A router per call left jeepney's receiver task pending when the context
-        exited, which the event loop reported as "Task was destroyed but it is
-        pending". One router also drops the connect and authenticate round trip
-        from every call.
+        A router per call left jeepney's receiver task pending at context exit,
+        which the loop reported as "Task was destroyed but it is pending".
         """
-        if self._router_lock is None:
-            self._router_lock = asyncio.Lock()
         async with self._router_lock:
             if self._router is None:
                 self._router_ctx = open_dbus_router(bus='SYSTEM')
@@ -140,30 +136,58 @@ class Plugin:
             return self._router
 
     async def _close_router(self):
-        """Close the shared router so the next call opens a fresh one."""
-        ctx, self._router_ctx, self._router = self._router_ctx, None, None
-        if ctx is None:
-            return
-        try:
-            await ctx.__aexit__(None, None, None)
-            _log('closed the D-Bus router')
-        except Exception as e:
-            _log('closing the D-Bus router failed:', e)
+        """Close the shared router and drop the cached adapter path.
+
+        jeepney's receiver calls drop_all() on its way out, so this aborts every
+        reply another call is waiting for. Reserve it for a broken transport.
+        """
+        global _adapter_path
+        async with self._router_lock:
+            _adapter_path = None
+            ctx, self._router_ctx, self._router = self._router_ctx, None, None
+            if ctx is None:
+                return
+            try:
+                await ctx.__aexit__(None, None, None)
+                _log('closed the D-Bus router')
+            except Exception as e:
+                decky.logger.warning(f'closing the D-Bus router failed: {e}')
+            finally:
+                # jeepney re-raises the receiver's error before it ever reaches
+                # conn.close(), so a dropped link leaks the socket without this.
+                conn = getattr(ctx, 'conn', None)
+                if conn is not None:
+                    try:
+                        await conn.close()
+                    except Exception as e:
+                        _log('closing the D-Bus connection failed:', e)
+
+    async def _send(self, msg):
+        router = await self._get_router()
+        _log('>> D-Bus message:', msg.header, msg.body)
+        reply = await router.send_and_get_reply(msg)
+        _log('<< D-Bus reply:', reply.header, reply.body)
+        return unwrap_msg(reply)
+
+    async def _recover(self, error: Exception):
+        """Drop the connection when the transport broke, not when BlueZ refused.
+
+        Both excluded errors mean the bus carried the message, so tearing the
+        connection down would abort every other in-flight call for nothing.
+        """
+        if not isinstance(error, (DBusErrorResponse, BluezObjectNotFound)):
+            await self._close_router()
 
     async def get_bluetooth_status(self):
         _log('>> get_bluetooth_status()')
         try:
             router = await self._get_router()
             msg = Properties(_addr(await _adapter_path_of(router), ADAPTER_IFACE)).get('Powered')
-            _log('>> D-Bus message:', msg.header, msg.body)
-            reply = await router.send_and_get_reply(msg)
-            _log('<< D-Bus reply:', reply.header, reply.body)
-            result = bool(unwrap_msg(reply)[0][1])
+            result = bool((await self._send(msg))[0][1])
             _log('<< get_bluetooth_status →', result)
             return result
         except Exception as e:
-            _forget_adapter()
-            await self._close_router()
+            await self._recover(e)
             decky.logger.error(f'get_bluetooth_status failed: {e}')
             return False
 
@@ -172,7 +196,7 @@ class Plugin:
         try:
             objects = await _managed_objects(await self._get_router())
         except Exception as e:
-            await self._close_router()
+            await self._recover(e)
             decky.logger.error(f'get_paired_devices_with_info failed: {e}')
             return []
 
@@ -204,20 +228,15 @@ class Plugin:
         try:
             router = await self._get_router()
             path = await _device_path_of(router, device)
-            msg = Properties(_addr(path, DEVICE_IFACE)).get_all()
-            _log('>> D-Bus message:', msg.header, msg.body)
-            reply = await router.send_and_get_reply(msg)
-            _log('<< D-Bus reply:', reply.header, reply.body)
+            body = await self._send(Properties(_addr(path, DEVICE_IFACE)).get_all())
 
             battery = None
             try:
-                batt_msg = Properties(_addr(path, BATTERY_IFACE)).get('Percentage')
-                batt_reply = await router.send_and_get_reply(batt_msg)
-                battery = unwrap_msg(batt_reply)[0][1]
+                battery = (await self._send(Properties(_addr(path, BATTERY_IFACE)).get('Percentage')))[0][1]
             except Exception:
                 pass
 
-            props = dict(unwrap_msg(reply)[0])
+            props = dict(body[0])
             if battery is None:
                 battery = _sysfs_battery(_prop(props, 'Address', device))
             result = {
@@ -254,14 +273,11 @@ class Plugin:
         _log(f'>> toggle_device_connection({device!r}, connected={connected}) → calling {method}')
         try:
             router = await self._get_router()
-            msg = new_method_call(_addr(await _device_path_of(router, device), DEVICE_IFACE), method)
-            _log('>> D-Bus message:', msg.header, msg.body)
-            reply = await router.send_and_get_reply(msg)
-            _log('<< D-Bus reply:', reply.header, reply.body)
-            unwrap_msg(reply)
+            await self._send(new_method_call(_addr(await _device_path_of(router, device), DEVICE_IFACE), method))
             _log('<< toggle_device_connection → ok')
             return True
         except Exception as e:
+            await self._recover(e)
             decky.logger.error(f'toggle_device_connection failed for {device}: {e}')
             return False
 
@@ -270,25 +286,21 @@ class Plugin:
         try:
             router = await self._get_router()
             adapter = _addr(await _adapter_path_of(router), ADAPTER_IFACE)
-            msg = Properties(adapter).set('Powered', 'b', state)
-            _log('>> D-Bus message:', msg.header, msg.body)
-            reply = await router.send_and_get_reply(msg)
-            _log('<< D-Bus reply:', reply.header, reply.body)
-            unwrap_msg(reply)
+            await self._send(Properties(adapter).set('Powered', 'b', state))
             _log('<< toggle_bluetooth → ok')
             return True
         except Exception as e:
-            _forget_adapter()
-            await self._close_router()
+            await self._recover(e)
             decky.logger.error(f'toggle_bluetooth failed: {e}')
             return False
 
     async def _main(self):
+        # Bound to the running loop rather than to import time.
+        self._router_lock = asyncio.Lock()
         decky.logger.info('Bluetooth plugin loaded')
 
     async def _unload(self):
         await self._close_router()
-        _forget_adapter()
         decky.logger.info('Bluetooth plugin unloaded')
 
     async def _uninstall(self):

@@ -64,7 +64,8 @@ export class BluetoothController {
 
   toggleBluetooth(currentStatus: boolean): Promise<boolean> {
     return call('toggle_bluetooth', [!currentStatus], () =>
-      retryWithTO(() => _toggleBluetooth(!currentStatus)).catch(error => {
+      // Powering a cold radio waits on the rfkill unblock and the HCI bring-up.
+      retryWithTO(() => _toggleBluetooth(!currentStatus), { timeout: 10000, retries: 0 }).catch(error => {
         if (error instanceof TimeoutError) {
           throw new BluetoothStatusError('Timed out setting bluetooth status');
         }
@@ -75,9 +76,8 @@ export class BluetoothController {
 
   toggleDeviceConnection(mac: string, connected: boolean): Promise<boolean> {
     return call('toggle_device_connection', [mac, connected], () =>
-      // BlueZ blocks for several seconds on a sleeping device, so this call needs
-      // a much longer budget than the read calls. It also gets no retry: a second
-      // Connect while the first one runs fights it instead of helping.
+      // BlueZ blocks for seconds on a sleeping device. No retry: a second
+      // Connect fights the first one instead of helping.
       retryWithTO(() => _toggleDeviceConnection(mac, connected), { timeout: 20000, retries: 0 }).catch(error => {
         if (error instanceof TimeoutError) {
           throw new DeviceConnectionError('Timed out toggling the device connection');

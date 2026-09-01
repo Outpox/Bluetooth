@@ -63,10 +63,14 @@
         width: 100%;
         overflow-wrap: anywhere;
         word-break: break-word;
+
+        .failed {
+          color: $color_failed;
+        }
       }
 
-      // Drawn in CSS rather than pulled from Steam's IconsModule, which the
-      // rest of this plugin avoids because its lookup breaks between releases.
+      // Drawn in CSS: this plugin avoids IconsModule, whose lookup breaks
+      // between Steam releases.
       .device-spinner {
         display: inline-block;
         width: 10px;

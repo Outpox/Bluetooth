@@ -12,9 +12,9 @@ export function i18n(key: string, fallback?: string) {
 }
 
 interface RetryOptions {
-  /** Overall budget for every attempt, in milliseconds. */
+  /** Budget across every attempt, in milliseconds. */
   timeout?: number;
-  /** Extra attempts after the first one. 0 means a single attempt. */
+  /** Extra attempts after the first. 0 means a single attempt. */
   retries?: number;
 }
 
