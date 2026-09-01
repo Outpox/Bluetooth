@@ -16,6 +16,13 @@
   .connect-container {
     display: flex;
     flex: 1;
+
+    // The rows stay listed while the radio is off, since seeing the paired
+    // devices is the point of the panel. They just stop offering an action.
+    &.off {
+      opacity: 0.5;
+    }
+
     // Without this a flex item cannot shrink below its min-content width, so a
     // long unbreakable device name widens the row and the focus scroll drags
     // the whole list sideways.

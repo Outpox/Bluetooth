@@ -76,6 +76,7 @@ function Content() {
           <Device
             key={device.mac}
             device={device}
+            enabled={status}
             failed={failedMacs.includes(device.mac)}
             refresh={() => refreshStatus(0)}
             setLoading={(state: boolean) => setLoading(state)}

@@ -16,12 +16,14 @@ export interface Device {
 
 export function Device({
   device,
+  enabled,
   failed,
   refresh,
   setLoading,
   onResult,
 }: {
   device: Device;
+  enabled: boolean;
   failed: boolean;
   refresh: () => Promise<void>;
   setLoading: (state: boolean) => void;
@@ -48,7 +50,9 @@ export function Device({
 
   const connect = () => {
     // A second activation would queue a contradictory Connect/Disconnect.
-    if (busy) {
+    // With the radio off BlueZ refuses every Connect, and reporting that as a
+    // device failure blames the device for a switch the user simply left off.
+    if (busy || !enabled) {
       return;
     }
     setBusy(true);
@@ -74,13 +78,15 @@ export function Device({
       <PanelSectionRow>
         <Focusable noFocusRing={true} className="custom-container" flow-children="row">
           <Focusable
-            onActivate={connect}
+            onActivate={enabled ? connect : undefined}
             onOKActionDescription={
-              device.connected
-                ? i18n('QuickAccess_Tab_Bluetooth_Disconnect', 'Disconnect')
-                : i18n('QuickAccess_Tab_Bluetooth_Connect', 'Connect')
+              enabled
+                ? device.connected
+                  ? i18n('QuickAccess_Tab_Bluetooth_Disconnect', 'Disconnect')
+                  : i18n('QuickAccess_Tab_Bluetooth_Connect', 'Connect')
+                : undefined
             }
-            className="connect-container"
+            className={enabled ? 'connect-container' : 'connect-container off'}
             noFocusRing={false}
           >
             <div className="device-icon">{getIcon()}</div>
