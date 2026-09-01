@@ -7,8 +7,8 @@ import { logger } from './logger';
 const _getBluetoothStatus = callable<[], boolean>('get_bluetooth_status');
 const _getPairedDevicesWithInfo = callable<[], Device[]>('get_paired_devices_with_info');
 const _getDeviceInfo = callable<[device: string], Device>('get_device_info');
-const _toggleBluetooth = callable<[state: boolean], void>('toggle_bluetooth');
-const _toggleDeviceConnection = callable<[device: string, connected: boolean], void>('toggle_device_connection');
+const _toggleBluetooth = callable<[state: boolean], boolean>('toggle_bluetooth');
+const _toggleDeviceConnection = callable<[device: string, connected: boolean], boolean>('toggle_device_connection');
 
 async function call<T>(name: string, args: unknown[], fn: () => Promise<T>): Promise<T> {
   logger.debug(`>> ${name}(${JSON.stringify(args)})`);
@@ -56,7 +56,7 @@ export class BluetoothController {
     );
   }
 
-  toggleBluetooth(currentStatus: boolean): Promise<void> {
+  toggleBluetooth(currentStatus: boolean): Promise<boolean> {
     return call('toggle_bluetooth', [!currentStatus], () =>
       retryWithTO(() => _toggleBluetooth(!currentStatus)).catch(error => {
         if (error instanceof TimeoutError) {
@@ -67,7 +67,7 @@ export class BluetoothController {
     );
   }
 
-  toggleDeviceConnection(mac: string, connected: boolean): Promise<void> {
+  toggleDeviceConnection(mac: string, connected: boolean): Promise<boolean> {
     return call('toggle_device_connection', [mac, connected], () => _toggleDeviceConnection(mac, connected));
   }
 }

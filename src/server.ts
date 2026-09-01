@@ -25,10 +25,16 @@ export async function getPairedDeviceWithInfo(mac: string): Promise<Device | Dev
   });
 }
 
-export async function toggleBluetooth(status: boolean): Promise<void> {
-  return controller.toggleBluetooth(status).catch(console.error);
+export async function toggleBluetooth(status: boolean): Promise<boolean> {
+  return controller.toggleBluetooth(status).catch(error => {
+    console.error(error);
+    return false;
+  });
 }
 
-export async function toggleDeviceConnection(device: Device): Promise<void> {
-  return controller.toggleDeviceConnection(device.mac, device.connected).catch(console.error);
+export async function toggleDeviceConnection(device: Device): Promise<boolean> {
+  return controller.toggleDeviceConnection(device.mac, device.connected).catch(error => {
+    console.error(error);
+    return false;
+  });
 }

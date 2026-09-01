@@ -5,6 +5,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'py_modules'))
 import decky
 from jeepney import DBusAddress, Properties, new_method_call
 from jeepney.io.asyncio import open_dbus_router
+from jeepney.wrappers import unwrap_msg
 
 BLUEZ_SERVICE = 'org.bluez'
 OBJECT_MANAGER_IFACE = 'org.freedesktop.DBus.ObjectManager'
@@ -40,25 +41,34 @@ def _prop(props: dict, key: str, default):  # type: ignore[type-arg]
 class Plugin:
     async def get_bluetooth_status(self):
         _log('>> get_bluetooth_status()')
-        async with open_dbus_router(bus='SYSTEM') as router:
-            msg = Properties(_adapter_addr()).get('Powered')
-            _log('>> D-Bus message:', msg.header, msg.body)
-            reply = await router.send_and_get_reply(msg)
-            _log('<< D-Bus reply:', reply.header, reply.body)
-        result = reply.body[0][1]
-        _log('<< get_bluetooth_status →', result)
-        return result
+        try:
+            async with open_dbus_router(bus='SYSTEM') as router:
+                msg = Properties(_adapter_addr()).get('Powered')
+                _log('>> D-Bus message:', msg.header, msg.body)
+                reply = await router.send_and_get_reply(msg)
+                _log('<< D-Bus reply:', reply.header, reply.body)
+            result = bool(unwrap_msg(reply)[0][1])
+            _log('<< get_bluetooth_status →', result)
+            return result
+        except Exception as e:
+            decky.logger.error(f'get_bluetooth_status failed: {e}')
+            return False
 
     async def get_paired_devices_with_info(self):
         _log('>> get_paired_devices_with_info()')
-        om_addr = DBusAddress('/', bus_name=BLUEZ_SERVICE, interface=OBJECT_MANAGER_IFACE)
-        msg = new_method_call(om_addr, 'GetManagedObjects')
-        async with open_dbus_router(bus='SYSTEM') as router:
-            _log('>> D-Bus message:', msg.header, msg.body)
-            reply = await router.send_and_get_reply(msg)
-            _log('<< D-Bus reply body length:', len(reply.body[0]) if reply.body else 0)
+        try:
+            om_addr = DBusAddress('/', bus_name=BLUEZ_SERVICE, interface=OBJECT_MANAGER_IFACE)
+            msg = new_method_call(om_addr, 'GetManagedObjects')
+            async with open_dbus_router(bus='SYSTEM') as router:
+                _log('>> D-Bus message:', msg.header, msg.body)
+                reply = await router.send_and_get_reply(msg)
+                _log('<< D-Bus reply type:', reply.header.message_type)
 
-        objects = reply.body[0]
+            objects = unwrap_msg(reply)[0]
+        except Exception as e:
+            decky.logger.error(f'get_paired_devices_with_info failed: {e}')
+            return []
+
         devices = []
         for _path, interfaces in objects.items():
             if DEVICE_IFACE not in interfaces:
@@ -93,11 +103,11 @@ class Plugin:
                 try:
                     batt_msg = Properties(_device_addr(device, interface=BATTERY_IFACE)).get('Percentage')
                     batt_reply = await router.send_and_get_reply(batt_msg)
-                    battery = batt_reply.body[0][1]
+                    battery = unwrap_msg(batt_reply)[0][1]
                 except Exception:
                     pass
 
-            props = dict(reply.body[0])
+            props = dict(unwrap_msg(reply)[0])
             result = {
                 'mac':           _prop(props, 'Address', device),
                 'name':          _prop(props, 'Alias', None) or _prop(props, 'Name', 'Unnamed device'),
@@ -124,6 +134,7 @@ class Plugin:
                 'name': 'Unnamed device',
                 'connected': False,
                 'icon': '',
+                'battery': None,
             }
 
     async def toggle_device_connection(self, device: str, connected: bool):
@@ -136,9 +147,12 @@ class Plugin:
                 _log('>> D-Bus message:', msg.header, msg.body)
                 reply = await router.send_and_get_reply(msg)
                 _log('<< D-Bus reply:', reply.header, reply.body)
-            _log(f'<< toggle_device_connection → ok')
+            unwrap_msg(reply)
+            _log('<< toggle_device_connection → ok')
+            return True
         except Exception as e:
             decky.logger.error(f'toggle_device_connection failed for {device}: {e}')
+            return False
 
     async def toggle_bluetooth(self, state: bool):
         _log(f'>> toggle_bluetooth(state={state})')
@@ -148,9 +162,12 @@ class Plugin:
                 _log('>> D-Bus message:', msg.header, msg.body)
                 reply = await router.send_and_get_reply(msg)
                 _log('<< D-Bus reply:', reply.header, reply.body)
+            unwrap_msg(reply)
             _log('<< toggle_bluetooth → ok')
+            return True
         except Exception as e:
             decky.logger.error(f'toggle_bluetooth failed: {e}')
+            return False
 
     async def _main(self):
         decky.logger.info('Bluetooth plugin loaded')
