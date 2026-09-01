@@ -10,6 +10,9 @@ import css from './index.scss';
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+const BATTERY_SETTLE_TRIES = 5;
+const BATTERY_SETTLE_INTERVAL = 1000;
+
 function Content() {
   const [status, setStatus] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -37,8 +40,26 @@ function Content() {
     setLoading(false);
   };
 
-  const handleDeviceResult = (mac: string, ok: boolean) => {
+  // BlueZ registers org.bluez.Battery1 on the device object a moment after the
+  // Connect call returns, so the refresh that follows a connect reads no battery
+  // yet. Re-read a few times until it appears. Each read costs a few ms.
+  const settleBattery = async (mac: string) => {
+    for (let attempt = 0; attempt < BATTERY_SETTLE_TRIES; attempt++) {
+      await sleep(BATTERY_SETTLE_INTERVAL);
+      const list = await getPairedDevicesWithInfo();
+      setDevices(list);
+      const device = list?.find(d => d.mac === mac);
+      if (!device?.connected || device.battery != null) {
+        return;
+      }
+    }
+  };
+
+  const handleDeviceResult = (mac: string, ok: boolean, wasConnected: boolean) => {
     setFailedMacs(previous => (ok ? previous.filter(m => m !== mac) : [...previous.filter(m => m !== mac), mac]));
+    if (ok && !wasConnected) {
+      void settleBattery(mac);
+    }
   };
 
   useEffect(() => {

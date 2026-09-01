@@ -27,7 +27,7 @@ export function Device({
   failed: boolean;
   refresh: () => Promise<void>;
   setLoading: (state: boolean) => void;
-  onResult: (mac: string, ok: boolean) => void;
+  onResult: (mac: string, ok: boolean, wasConnected: boolean) => void;
 }) {
   const [busy, setBusy] = useState(false);
 
@@ -59,7 +59,7 @@ export function Device({
     setLoading(true);
     void toggleDeviceConnection(device)
       // The refresh clears every stored failure, so report this one after it.
-      .then(ok => refresh().then(() => onResult(device.mac, ok)))
+      .then(ok => refresh().then(() => onResult(device.mac, ok, device.connected)))
       .finally(() => setBusy(false));
   };
 
