@@ -65,8 +65,8 @@ export function Device({
 
   const statusLabel = busy
     ? device.connected
-      ? i18n('Settings_Bluetooth_Disconnecting', 'Disconnecting')
-      : i18n('Settings_Bluetooth_Connecting', 'Connecting')
+      ? i18n('Internet_Network_State_Disconnecting', 'Disconnecting')
+      : i18n('Internet_Network_State_Connecting', 'Connecting')
     : failed
       ? i18n('Settings_Bluetooth_Failed', 'Failed')
       : device.connected
@@ -81,8 +81,8 @@ export function Device({
             onActivate={connect}
             onOKActionDescription={
               device.connected
-                ? i18n('Settings_Bluetooth_Disconnect', 'Disconnect')
-                : i18n('Settings_Bluetooth_Connect', 'Connect')
+                ? i18n('QuickAccess_Tab_Bluetooth_Disconnect', 'Disconnect')
+                : i18n('QuickAccess_Tab_Bluetooth_Connect', 'Connect')
             }
             className="connect-container"
             noFocusRing={false}

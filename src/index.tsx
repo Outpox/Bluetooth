@@ -60,7 +60,9 @@ function Content() {
         )}
         {!loading && devices?.length === 0 && (
           <PanelSectionRow>
-            <div className="no-devices">{i18n('Settings_Bluetooth_NoDevicesFound', 'No paired devices')}</div>
+            <div className="no-devices">
+              {i18n('QuickAccess_Tab_Bluetooth_Section_Devices_NonePaired', 'No devices paired')}
+            </div>
           </PanelSectionRow>
         )}
         {devices?.map(device => (
