@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'py_modules'))
@@ -116,28 +117,62 @@ def _sysfs_battery(mac: str):
 
 
 class Plugin:
+    # One connection for the plugin's lifetime, opened on first use.
+    _router = None
+    _router_ctx = None
+    _router_lock = None
+
+    async def _get_router(self):
+        """Return the shared D-Bus router, opening it on first use.
+
+        A router per call left jeepney's receiver task pending when the context
+        exited, which the event loop reported as "Task was destroyed but it is
+        pending". One router also drops the connect and authenticate round trip
+        from every call.
+        """
+        if self._router_lock is None:
+            self._router_lock = asyncio.Lock()
+        async with self._router_lock:
+            if self._router is None:
+                self._router_ctx = open_dbus_router(bus='SYSTEM')
+                self._router = await self._router_ctx.__aenter__()
+                _log('opened the D-Bus router')
+            return self._router
+
+    async def _close_router(self):
+        """Close the shared router so the next call opens a fresh one."""
+        ctx, self._router_ctx, self._router = self._router_ctx, None, None
+        if ctx is None:
+            return
+        try:
+            await ctx.__aexit__(None, None, None)
+            _log('closed the D-Bus router')
+        except Exception as e:
+            _log('closing the D-Bus router failed:', e)
+
     async def get_bluetooth_status(self):
         _log('>> get_bluetooth_status()')
         try:
-            async with open_dbus_router(bus='SYSTEM') as router:
-                msg = Properties(_addr(await _adapter_path_of(router), ADAPTER_IFACE)).get('Powered')
-                _log('>> D-Bus message:', msg.header, msg.body)
-                reply = await router.send_and_get_reply(msg)
-                _log('<< D-Bus reply:', reply.header, reply.body)
+            router = await self._get_router()
+            msg = Properties(_addr(await _adapter_path_of(router), ADAPTER_IFACE)).get('Powered')
+            _log('>> D-Bus message:', msg.header, msg.body)
+            reply = await router.send_and_get_reply(msg)
+            _log('<< D-Bus reply:', reply.header, reply.body)
             result = bool(unwrap_msg(reply)[0][1])
             _log('<< get_bluetooth_status →', result)
             return result
         except Exception as e:
             _forget_adapter()
+            await self._close_router()
             decky.logger.error(f'get_bluetooth_status failed: {e}')
             return False
 
     async def get_paired_devices_with_info(self):
         _log('>> get_paired_devices_with_info()')
         try:
-            async with open_dbus_router(bus='SYSTEM') as router:
-                objects = await _managed_objects(router)
+            objects = await _managed_objects(await self._get_router())
         except Exception as e:
+            await self._close_router()
             decky.logger.error(f'get_paired_devices_with_info failed: {e}')
             return []
 
@@ -167,20 +202,20 @@ class Plugin:
     async def get_device_info(self, device: str):
         _log(f'>> get_device_info({device!r})')
         try:
-            async with open_dbus_router(bus='SYSTEM') as router:
-                path = await _device_path_of(router, device)
-                msg = Properties(_addr(path, DEVICE_IFACE)).get_all()
-                _log('>> D-Bus message:', msg.header, msg.body)
-                reply = await router.send_and_get_reply(msg)
-                _log('<< D-Bus reply:', reply.header, reply.body)
+            router = await self._get_router()
+            path = await _device_path_of(router, device)
+            msg = Properties(_addr(path, DEVICE_IFACE)).get_all()
+            _log('>> D-Bus message:', msg.header, msg.body)
+            reply = await router.send_and_get_reply(msg)
+            _log('<< D-Bus reply:', reply.header, reply.body)
 
-                battery = None
-                try:
-                    batt_msg = Properties(_addr(path, BATTERY_IFACE)).get('Percentage')
-                    batt_reply = await router.send_and_get_reply(batt_msg)
-                    battery = unwrap_msg(batt_reply)[0][1]
-                except Exception:
-                    pass
+            battery = None
+            try:
+                batt_msg = Properties(_addr(path, BATTERY_IFACE)).get('Percentage')
+                batt_reply = await router.send_and_get_reply(batt_msg)
+                battery = unwrap_msg(batt_reply)[0][1]
+            except Exception:
+                pass
 
             props = dict(unwrap_msg(reply)[0])
             if battery is None:
@@ -218,11 +253,11 @@ class Plugin:
         method = 'Disconnect' if connected else 'Connect'
         _log(f'>> toggle_device_connection({device!r}, connected={connected}) → calling {method}')
         try:
-            async with open_dbus_router(bus='SYSTEM') as router:
-                msg = new_method_call(_addr(await _device_path_of(router, device), DEVICE_IFACE), method)
-                _log('>> D-Bus message:', msg.header, msg.body)
-                reply = await router.send_and_get_reply(msg)
-                _log('<< D-Bus reply:', reply.header, reply.body)
+            router = await self._get_router()
+            msg = new_method_call(_addr(await _device_path_of(router, device), DEVICE_IFACE), method)
+            _log('>> D-Bus message:', msg.header, msg.body)
+            reply = await router.send_and_get_reply(msg)
+            _log('<< D-Bus reply:', reply.header, reply.body)
             unwrap_msg(reply)
             _log('<< toggle_device_connection → ok')
             return True
@@ -233,17 +268,18 @@ class Plugin:
     async def toggle_bluetooth(self, state: bool):
         _log(f'>> toggle_bluetooth(state={state})')
         try:
-            async with open_dbus_router(bus='SYSTEM') as router:
-                adapter = _addr(await _adapter_path_of(router), ADAPTER_IFACE)
-                msg = Properties(adapter).set('Powered', 'b', state)
-                _log('>> D-Bus message:', msg.header, msg.body)
-                reply = await router.send_and_get_reply(msg)
-                _log('<< D-Bus reply:', reply.header, reply.body)
+            router = await self._get_router()
+            adapter = _addr(await _adapter_path_of(router), ADAPTER_IFACE)
+            msg = Properties(adapter).set('Powered', 'b', state)
+            _log('>> D-Bus message:', msg.header, msg.body)
+            reply = await router.send_and_get_reply(msg)
+            _log('<< D-Bus reply:', reply.header, reply.body)
             unwrap_msg(reply)
             _log('<< toggle_bluetooth → ok')
             return True
         except Exception as e:
             _forget_adapter()
+            await self._close_router()
             decky.logger.error(f'toggle_bluetooth failed: {e}')
             return False
 
@@ -251,6 +287,8 @@ class Plugin:
         decky.logger.info('Bluetooth plugin loaded')
 
     async def _unload(self):
+        await self._close_router()
+        _forget_adapter()
         decky.logger.info('Bluetooth plugin unloaded')
 
     async def _uninstall(self):
