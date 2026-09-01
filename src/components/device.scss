@@ -64,6 +64,26 @@
         overflow-wrap: anywhere;
         word-break: break-word;
       }
+
+      // Drawn in CSS rather than pulled from Steam's IconsModule, which the
+      // rest of this plugin avoids because its lookup breaks between releases.
+      .device-spinner {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 6px;
+        vertical-align: baseline;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-top-color: $color_light_gray;
+        border-radius: 50%;
+        animation: device-spinner-rotate 0.8s linear infinite;
+      }
     }
+  }
+}
+
+@keyframes device-spinner-rotate {
+  to {
+    transform: rotate(360deg);
   }
 }

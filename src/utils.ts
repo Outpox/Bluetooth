@@ -6,9 +6,9 @@ declare const LocalizationManager: {
   m_mapFallbackTokens: Map<string, string>;
 };
 
-export function i18n(key: string) {
-  const val = LocalizationManager.m_mapTokens.get(key);
-  return val ? val : LocalizationManager.m_mapFallbackTokens.get(key)!;
+export function i18n(key: string, fallback?: string) {
+  const val = LocalizationManager.m_mapTokens.get(key) ?? LocalizationManager.m_mapFallbackTokens.get(key);
+  return val ?? fallback ?? key;
 }
 
 export const retryWithTO = <T>(fn: () => Promise<T>): Promise<T> => {

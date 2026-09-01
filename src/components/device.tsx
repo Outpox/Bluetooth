@@ -1,5 +1,5 @@
 import { Focusable, PanelSectionRow } from '@decky/ui';
-import { ReactElement } from 'react';
+import { ReactElement, useState } from 'react';
 import { toggleDeviceConnection } from '../server';
 import { i18n } from '../utils';
 import { BluetoothIcon, GamepadIcon, HeadsetIcon, KeyboardIcon } from './deckIcons';
@@ -23,6 +23,8 @@ export function Device({
   refresh: () => void;
   setLoading: (state: boolean) => void;
 }) {
+  const [busy, setBusy] = useState(false);
+
   const getIcon = (): ReactElement => {
     switch (device.icon) {
       case 'input-gaming':
@@ -41,8 +43,16 @@ export function Device({
   };
 
   const connect = () => {
+    // A second activation while the D-Bus call runs would queue a contradictory
+    // Connect/Disconnect, so the row ignores input until the call returns.
+    if (busy) {
+      return;
+    }
+    setBusy(true);
     setLoading(true);
-    void toggleDeviceConnection(device).then(refresh);
+    void toggleDeviceConnection(device)
+      .then(refresh)
+      .finally(() => setBusy(false));
   };
 
   return (
@@ -54,12 +64,25 @@ export function Device({
             <div className={`device-info ${device.connected ? 'connected' : 'disconnected'}`}>
               <div className="device-name">{device.name}</div>
               <div className="device-status">
-                {device.connected ? (
-                  <span className="uppercase">{i18n('Settings_Bluetooth_Connected')}</span>
+                {busy ? (
+                  <>
+                    <span className="device-spinner" />
+                    <span className="uppercase">
+                      {device.connected
+                        ? i18n('Settings_Bluetooth_Disconnecting', 'Disconnecting')
+                        : i18n('Settings_Bluetooth_Connecting', 'Connecting')}
+                    </span>
+                  </>
                 ) : (
-                  <span className="uppercase">{i18n('Settings_Bluetooth_NotConnected')}</span>
+                  <>
+                    {device.connected ? (
+                      <span className="uppercase">{i18n('Settings_Bluetooth_Connected')}</span>
+                    ) : (
+                      <span className="uppercase">{i18n('Settings_Bluetooth_NotConnected')}</span>
+                    )}
+                    {device.battery != null && <span> · {device.battery}%</span>}
+                  </>
                 )}
-                {device.battery != null && <span> · {device.battery}%</span>}
               </div>
             </div>
           </Focusable>
