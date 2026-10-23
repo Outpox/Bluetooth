@@ -36,9 +36,6 @@ dist/
 
 __pycache__/
 
-# Python dependencies installed via requirements.txt
-py_modules/*
-!py_modules/.keep
 
 /.yalc
 yalc.lock
