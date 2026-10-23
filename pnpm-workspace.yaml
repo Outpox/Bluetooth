@@ -1,0 +1,8 @@
+allowBuilds:
+  # The optional native watcher of sass ships prebuilt binaries; the build never runs sass --watch.
+  '@parcel/watcher': false
+
+peerDependencyRules:
+  ignoreMissing:
+    - react
+    - react-dom
